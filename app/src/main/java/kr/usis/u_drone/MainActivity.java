@@ -4,9 +4,7 @@ import android.os.SystemClock;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.content.Context;
+
 
 import kr.usis.serial.act.DeviceListActivity;
 

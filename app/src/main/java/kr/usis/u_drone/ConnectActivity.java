@@ -9,7 +9,7 @@ import android.widget.Toast;
  * Created by msnl on 7/15/15.
  */
 public class ConnectActivity extends Activity {
-    Button ConnectButton;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

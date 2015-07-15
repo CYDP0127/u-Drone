@@ -1,20 +1,35 @@
 package kr.usis.u_drone;
 
+import android.content.Intent;
+import android.content.Context;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 import org.mavlink.TestMavlinkReader;
 
 
 public class MainActivity extends ActionBarActivity {
-
+    Button ConnectButton;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final Context context = this;
+        ConnectButton = (Button) findViewById(R.id.ConnectButton);
+        //ConnectButton.setOnClickListener();
 
+        ConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //connect to usb-serial project
+                Intent intent = new Intent(context, ConnectActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override

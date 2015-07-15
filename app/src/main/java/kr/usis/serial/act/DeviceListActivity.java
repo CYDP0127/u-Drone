@@ -137,7 +137,7 @@ public class DeviceListActivity {
     }
 
     private void showConsoleActivity(UsbSerialPort port) {
-        SerialConsoleActivity.show(mContext, port);
+        new SerialConsoleActivity().show(mContext, port);
     }
 }
 

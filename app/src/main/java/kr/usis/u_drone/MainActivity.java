@@ -12,15 +12,11 @@ import kr.usis.serial.act.DeviceListActivity;
 
 public class MainActivity extends ActionBarActivity {
 
-    TextView textView;
-    String a = new String();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        textView = (TextView)findViewById(R.id.textView);
     }
 
     //button event

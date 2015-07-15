@@ -164,6 +164,7 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
                 listener.onNewData(data);//run thread at SerialConsoleActivity // Daniel
+
             }
             mReadBuffer.clear();
         }

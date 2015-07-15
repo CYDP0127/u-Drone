@@ -30,11 +30,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import kr.usis.serial.driver.UsbSerialPort;
 import kr.usis.serial.util.HexDump;
 import kr.usis.serial.util.SerialInputOutputManager;
-import kr.usis.u_drone.R;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -61,8 +61,8 @@ public class SerialConsoleActivity extends Activity {
      * process, and this is a simple demo.
      */
     private static UsbSerialPort sPort = null;
-
- //   private TextView mTitleTextView;
+    public byte[] recieved = new byte[200];
+   // private TextView mTitleTextView;
     private TextView mDumpTextView;
     private ScrollView mScrollView;
 
@@ -70,36 +70,31 @@ public class SerialConsoleActivity extends Activity {
 
     private SerialInputOutputManager mSerialIoManager;
 
-   /* private final SerialInputOutputManager.Listener mListener =
+    private final SerialInputOutputManager.Listener mListener =
             new SerialInputOutputManager.Listener() {
 
-        @Override
-        public void onRunError(Exception e) {
-            Log.d(TAG, "Runner stopped.");
-        }
-
-        @Override
-        public void onNewData(final byte[] data) {
-            SerialConsoleActivity.this.runOnUiThread(new Runnable() {
                 @Override
-                public void run() {
-                    SerialConsoleActivity.this.updateReceivedData(data);
+                public void onRunError(Exception e) {
+                    Log.d(TAG, "Runner stopped.");
                 }
-            });
-        }
-    };*/
+
+                @Override
+                public void onNewData(final byte[] data) {
+                    SerialConsoleActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            SerialConsoleActivity.this.updateReceivedData(data);
+                        }
+                    });
+                }
+            };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.serial_console);
-    // //   mTitleTextView = (TextView) findViewById(R.id.demoTitle);
-    //    mDumpTextView = (TextView) findViewById(R.id.consoleText);
-    //    mScrollView = (ScrollView) findViewById(R.id.demoScroller);
-
     }
-/*
-    @Override
+
+   /* @Override
     protected void onPause() {
         super.onPause();
         stopIoManager();
@@ -112,29 +107,36 @@ public class SerialConsoleActivity extends Activity {
             sPort = null;
         }
         finish();
-    }
+    }*/
 
     @Override
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "Resumed, port=" + sPort);
         if (sPort == null) {
-            mTitleTextView.setText("No serial device.");
+          //  mTitleTextView.setText("No serial device.");
+            Toast toast = Toast.makeText(this, "No serial device.", Toast.LENGTH_SHORT);
+            toast.show();
         } else {
             final UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 
             UsbDeviceConnection connection = usbManager.openDevice(sPort.getDriver().getDevice());
             if (connection == null) {
-                mTitleTextView.setText("Opening device failed");
+              //  mTitleTextView.setText("Opening device failed");
+                Toast toast = Toast.makeText(this, "Opening device failed", Toast.LENGTH_SHORT);
                 return;
             }
 
             try {
                 sPort.open(connection);
-                sPort.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+                sPort.setParameters(57600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+                Toast toast = Toast.makeText(this, "connected!!", Toast.LENGTH_LONG);
+                toast.show();
+
             } catch (IOException e) {
                 Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
-                mTitleTextView.setText("Error opening device: " + e.getMessage());
+              //  mTitleTextView.setText("Error opening device: " + e.getMessage());
+                Toast toast = Toast.makeText(this, "Error opening device", Toast.LENGTH_SHORT);
                 try {
                     sPort.close();
                 } catch (IOException e2) {
@@ -143,9 +145,10 @@ public class SerialConsoleActivity extends Activity {
                 sPort = null;
                 return;
             }
-            mTitleTextView.setText("Serial device: " + sPort.getClass().getSimpleName());
+           // mTitleTextView.setText("Serial device: " + sPort.getClass().getSimpleName());
+            Toast toast = Toast.makeText(this, "serial device", Toast.LENGTH_SHORT);
         }
-        onDeviceStateChange();
+       // onDeviceStateChange();
     }
 
     private void stopIoManager() {
@@ -167,21 +170,24 @@ public class SerialConsoleActivity extends Activity {
     private void onDeviceStateChange() {
         stopIoManager();
         startIoManager();
-    }*/
+    }
 
-  /*  private void updateReceivedData(byte[] data) {
-        final String message = "Read " + data.length + " bytes: \n"
+    //recieve
+    private void updateReceivedData(byte[] data) {
+      //  this.recieved = data;
+        /*final String message = "Read " + data.length + " bytes: \n"
                 + HexDump.dumpHexString(data) + "\n\n";
         mDumpTextView.append(message);
-        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
+        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());*/
+
+
+
     }
-*/
     /**
      * Starts the activity, using the supplied driver instance.
      *
-     * @param context
-     * @param driver
-     */
+     * //@param context
+     */ //@param driver
 
     static void show(Context context, UsbSerialPort port) {
         sPort = port;

@@ -128,6 +128,7 @@ public class DeviceListActivity {
                         HexDump.toHexString((short) device.getProductId()));
                     Toast toast = Toast.makeText(mContext, title, Toast.LENGTH_LONG);
                     toast.show();
+                    toStartActivity();
                     this.cancel(true);
             }
             }

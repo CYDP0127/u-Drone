@@ -9,6 +9,7 @@ import android.widget.Toast;
 import android.content.Context;
 
 import kr.usis.serial.act.DeviceListActivity;
+import kr.usis.serial.act.SerialConsoleActivity;
 
 public class MainActivity extends ActionBarActivity {
 

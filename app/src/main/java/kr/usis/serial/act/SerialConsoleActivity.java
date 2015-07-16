@@ -127,7 +127,6 @@ public class SerialConsoleActivity{
             toast.show();
         } else {
             final UsbManager usbManager = (UsbManager) mContext.getSystemService(Context.USB_SERVICE);
-
             UsbDeviceConnection connection = usbManager.openDevice(sPort.getDriver().getDevice());
             if (connection == null) {
               //  mTitleTextView.setText("Opening device failed");

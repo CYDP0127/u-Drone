@@ -7,5 +7,6 @@
     <string name="refreshing">Refreshing...</string>
     <string name="demo_title">test</string>
     <string name="ConnectButton">Connect</string>
+    <string name="DisconnectButton">Disconnect</string>
 
 </resources>

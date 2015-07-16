@@ -24,7 +24,7 @@ public class MainActivity extends ActionBarActivity {
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
 
     //Handler for getting start Input Thread. - Daniel
-    Handler mHandler = new Handler(){
+    Handler mHandler = new Handler() {
         public void handleMessage(Message msg){
             if(msg.what == 0){
                 startIoManager();
@@ -52,7 +52,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             };
 
-
+    // display message on sce
     private void updateReceivedData(byte[] data) {
         final String message = "Read " + data.length + " bytes: \n"
                 + HexDump.dumpHexString(data) + "\n\n";

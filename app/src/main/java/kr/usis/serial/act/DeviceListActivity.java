@@ -82,7 +82,7 @@ public class DeviceListActivity {
     }
 
     public void toStartActivity() {
-        if(mEntries.get(0)!=null) {
+        if(!mEntries.isEmpty()) {
             showConsoleActivity(mEntries.get(0)); //put device to showconsoleactivity.
         }
     }
@@ -137,7 +137,7 @@ public class DeviceListActivity {
     }
 
     private void showConsoleActivity(UsbSerialPort port) {
-        new SerialConsoleActivity().show(mContext, port);
+       new SerialConsoleActivity(mContext, port).getConnect();
     }
 }
 

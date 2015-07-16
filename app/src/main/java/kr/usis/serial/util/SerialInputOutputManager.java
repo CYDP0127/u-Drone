@@ -22,6 +22,9 @@
 package kr.usis.serial.util;
 
 import android.hardware.usb.UsbRequest;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 import kr.usis.serial.driver.UsbSerialPort;
@@ -49,6 +52,8 @@ public class SerialInputOutputManager implements Runnable{
 
     // Synchronized by 'mWriteBuffer'
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(BUFSIZ);
+
+    Handler mHandler;
 
     private enum State {
         STOPPED,
@@ -99,7 +104,7 @@ public class SerialInputOutputManager implements Runnable{
     }
 */
 
-  /*  public synchronized Listener getListener() {
+  /*  public synchronized Listener g0etListener() {
         return mListener;
     }*/
 
@@ -126,7 +131,55 @@ public class SerialInputOutputManager implements Runnable{
      *
      * NOTE(mikey): Uses inefficient read/write-with-timeout.
      * TODO(mikey): Read asynchronously with {@link UsbRequest#queue(ByteBuffer, int)}
-     */
+*/
+
+
+    @Override
+    public void run() {
+        Looper.prepare();
+
+
+        mHandler = new Handler(){
+            public void HandleMessage(Message msg){
+                //test
+            }
+
+        };
+        Looper.loop();
+
+
+        synchronized (this) {
+            if (getState() != State.STOPPED) {
+                throw new IllegalStateException("Already running.");
+            }
+            mState = State.RUNNING;
+        }
+
+        Log.i(TAG, "Running ..");
+        try {
+            while (true) {
+                if (getState() != State.RUNNING) {
+                    Log.i(TAG, "Stopping mState=" + getState());
+                    break;
+                }
+                step();
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
+  /*          final Listener listener = getListener();
+            if (listener != null) {
+              listener.onRunError(e);
+            }*/
+        } finally {
+            synchronized (this) {
+                mState = State.STOPPED;
+                Log.i(TAG, "Stopped.");
+            }
+        }
+    }
+
+
+    /*   *//*
     @Override
     public void run() {
         synchronized (this) {
@@ -147,17 +200,17 @@ public class SerialInputOutputManager implements Runnable{
             }
         } catch (Exception e) {
             Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
-/*            final Listener listener = getListener();
+*//*            final Listener listener = getListener();
             if (listener != null) {
               listener.onRunError(e);
-            }*/
+            }*//*
         } finally {
             synchronized (this) {
                 mState = State.STOPPED;
                 Log.i(TAG, "Stopped.");
             }
         }
-    }
+    }*/
 
     private void step() throws IOException {
         // Handle incoming data.

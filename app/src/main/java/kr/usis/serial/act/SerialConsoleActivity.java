@@ -70,6 +70,13 @@ public class SerialConsoleActivity{
 
     private SerialInputOutputManager mSerialIoManager;
 
+    public SerialConsoleActivity(Context mContext, UsbSerialPort port) {
+        sPort = port;
+        this.mContext = mContext;
+        Toast toast = Toast.makeText(mContext, "SerialConsoleActivity", Toast.LENGTH_LONG);
+        toast.show();
+    }
+
   /*  private final SerialInputOutputManager.Listener mListener =
             new SerialInputOutputManager.Listener() {
 
@@ -111,11 +118,12 @@ public class SerialConsoleActivity{
 
 
     public void getConnect() {
-
+        Toast toast = Toast.makeText(mContext, "getConnect", Toast.LENGTH_SHORT);
+        toast.show();
         Log.d(TAG, "Resumed, port=" + sPort);
         if (sPort == null) {
           //  mTitleTextView.setText("No serial device.");
-            Toast toast = Toast.makeText(mContext, "No serial device.", Toast.LENGTH_SHORT);
+            toast = Toast.makeText(mContext, "No serial device.", Toast.LENGTH_SHORT);
             toast.show();
         } else {
             final UsbManager usbManager = (UsbManager) mContext.getSystemService(Context.USB_SERVICE);
@@ -123,20 +131,21 @@ public class SerialConsoleActivity{
             UsbDeviceConnection connection = usbManager.openDevice(sPort.getDriver().getDevice());
             if (connection == null) {
               //  mTitleTextView.setText("Opening device failed");
-                Toast toast = Toast.makeText(mContext, "Opening device failed", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(mContext, "Opening device failed", Toast.LENGTH_SHORT);
+                toast.show();
                 return;
             }
 
             try {
                 sPort.open(connection);
                 sPort.setParameters(57600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-                Toast toast = Toast.makeText(mContext, "connected!!", Toast.LENGTH_LONG);
+                toast = Toast.makeText(mContext, "connected!!", Toast.LENGTH_LONG);
                 toast.show();
 
             } catch (IOException e) {
                 Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
               //  mTitleTextView.setText("Error opening device: " + e.getMessage());
-                Toast toast = Toast.makeText(mContext, "Error opening device", Toast.LENGTH_SHORT);
+                toast = Toast.makeText(mContext, "Error opening device", Toast.LENGTH_SHORT); toast.show();
                 try {
                     sPort.close();
                 } catch (IOException e2) {
@@ -146,7 +155,7 @@ public class SerialConsoleActivity{
                 return;
             }
            // mTitleTextView.setText("Serial device: " + sPort.getClass().getSimpleName());
-            Toast toast = Toast.makeText(mContext, "serial device", Toast.LENGTH_SHORT);
+            toast = Toast.makeText(mContext, "serial device", Toast.LENGTH_SHORT); toast.show();
         }
        // onDeviceStateChange();
     }
@@ -190,14 +199,12 @@ public class SerialConsoleActivity{
      * //@param context
      */ //@param driver
 
-    public void show(Context context, UsbSerialPort port) {
-        sPort = port;
-        mContext = context;
-        getConnect();
+   // public void SerialConsoleActivity(Context context, UsbSerialPort port) {
+
 
 /*        final Intent intent = new Intent(context, SerialConsoleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NO_HISTORY);
         context.startActivity(intent);*/
-    }
+    //}
 
 }

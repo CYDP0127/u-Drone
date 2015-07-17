@@ -5,9 +5,12 @@ import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,6 +22,8 @@ public class MainActivity extends ActionBarActivity {
     TextView textview;
 
     BackThread mThread;
+    boolean DisconnectedFlag = false;
+    DeviceListActivity dla;
 
     private SerialInputOutputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
@@ -72,22 +77,46 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
+
+        ConnectButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                connect();
+            }
+        });
+        final Button DisconnectButton = (Button) findViewById(R.id.DisconnectButton);
+
+        DisconnectButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                disconnect();
+            }
+        });
+
     }
 
-    //button event
-    public void onClick(View v) {
-        DeviceListActivity dla = new DeviceListActivity(this);
-        dla.getUSBService();
-        dla.refreshDeviceList();
+    //connect button event
+    public void connect() {
+        if (!DisconnectedFlag) {
+            Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
+            dla = new DeviceListActivity(this);
+            dla.getUSBService();
+            dla.refreshDeviceList();
 
-        textview = (TextView) findViewById(R.id.textView);
-        textview.setText("testtest");
-
-        mThread = new BackThread(mHandler);
-        mThread.setDaemon(true);
-        mThread.start();
-
+            mThread = new BackThread(mHandler);
+            mThread.setDaemon(true);
+            mThread.start();
+            DisconnectedFlag = true;
+        }
     }
+
+    //disconnect button event
+    public void disconnect() {
+        Toast.makeText(this, "Connection Destroyed", Toast.LENGTH_SHORT).show();
+        dla = null;
+        DisconnectedFlag = false;
+        mThread = null;
+    }
+
 }
 
 //Thread for checking connection. - Daniel

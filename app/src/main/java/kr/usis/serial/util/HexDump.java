@@ -32,14 +32,14 @@ public class HexDump {
     public static String dumpHexString(byte[] array, int offset, int length) {
         StringBuilder result = new StringBuilder();
 
-        byte[] line = new byte[16];
-        int lineIndex = 0;
+       // byte[] line = new byte[16];
+/*        int lineIndex = 0;
 
         result.append("\n0x");
-        result.append(toHexString(offset));
+        result.append(toHexString(offset));*/
 
         for (int i = offset; i < offset + length; i++) {
-            if (lineIndex == 16) {
+            /*if (lineIndex == 16) {
                 result.append(" ");
 
                 for (int j = 0; j < 16; j++) {
@@ -53,17 +53,17 @@ public class HexDump {
                 result.append("\n0x");
                 result.append(toHexString(i));
                 lineIndex = 0;
-            }
+            }*/
 
             byte b = array[i];
             result.append(" ");
             result.append(HEX_DIGITS[(b >>> 4) & 0x0F]);
             result.append(HEX_DIGITS[b & 0x0F]);
 
-            line[lineIndex++] = b;
+          //  line[lineIndex++] = b;
         }
 
-        if (lineIndex != 16) {
+        /*if (lineIndex != 16) {
             int count = (16 - lineIndex) * 3;
             count++;
             for (int i = 0; i < count; i++) {
@@ -77,7 +77,7 @@ public class HexDump {
                     result.append(".");
                 }
             }
-        }
+        }*/
 
         return result.toString();
     }

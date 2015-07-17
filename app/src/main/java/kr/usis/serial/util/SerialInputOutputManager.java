@@ -25,6 +25,9 @@ import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
 import kr.usis.serial.driver.UsbSerialPort;
+
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -167,7 +170,9 @@ public class SerialInputOutputManager implements Runnable {
             if (listener != null) {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
-                listener.onNewData(data);
+
+               // if((data[0]&0xff)==254)
+                    listener.onNewData(data);
             }
             mReadBuffer.clear();
         }

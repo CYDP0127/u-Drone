@@ -66,6 +66,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             };
 
+
     //display input data
     private void updateReceivedData(byte[] data) {
        // final String message = "Read " + data.length + " bytes: \n"

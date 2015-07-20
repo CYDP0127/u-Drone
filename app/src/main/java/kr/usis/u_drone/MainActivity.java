@@ -87,14 +87,18 @@ public class MainActivity extends ActionBarActivity {
 
 
     //display input data
-    private void updateReceivedData(byte[] data) {
+        private void updateReceivedData(byte[] data) {
         //final String message = HexDump.dumpHexString(data);
-        textview.append(String.valueOf(data.length));
+
+        if((data[0]&255)==255)
+            textview.append("error");
+
+        textview.append("w");
         textview.append(" ");
         textview.invalidate();
     }
-/*
-    private void updateReceivedData(MAVLinkMessage data) {
+
+   /* private void updateReceivedData(MAVLinkMessage data) {
         //final String message = HexDump.dumpHexString(data);
         textview.append("SysId=" + data.sysId + " CompId=" + data.componentId + " seq=" + data.sequence + " " );
         textview.append("  ");
@@ -157,6 +161,7 @@ public class MainActivity extends ActionBarActivity {
         dla = null;
         DisconnectedFlag = false;
         mThread = null;
+        textview.setText("");
     }
 
 

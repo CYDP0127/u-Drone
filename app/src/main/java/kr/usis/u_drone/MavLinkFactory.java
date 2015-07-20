@@ -22,8 +22,7 @@ public class MavLinkFactory {
 
         try{
             msg = reader.getNextMessage();
-
-        } catch (Exception var6) {  ;  }
+                    } catch (Exception var6) {  ;  }
         e.close();
         return msg;
     }

@@ -24,6 +24,7 @@ package kr.usis.serial.util;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import org.mavlink.MAVLinkReader;
 import org.mavlink.messages.MAVLinkMessage;
 
 import kr.usis.serial.driver.UsbSerialPort;
@@ -32,6 +33,7 @@ import kr.usis.u_drone.MavLinkFactory;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -74,7 +76,7 @@ public class SerialInputOutputManager implements Runnable {
          * Called when new incoming data is available.
          */
         public void onNewData(byte[] data);
-       // public void onNewData(MAVLinkMessage data);
+        //public void onNewData(MAVLinkMessage data);
         /**
          * Called when {@link SerialInputOutputManager#run()} aborts due to an
          * error.
@@ -176,10 +178,38 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
 
-              //  if((data[0]&0xff)>=254) {
-                //    MAVLinkMessage msg =  mavlinkfactory.readMavlink(data);
+                try{
+                    byte tmp = data[5];
+                    if(tmp == 0x00){
                     listener.onNewData(data);
+                }}
+                catch(Exception d){
+                    data[0]=(byte)0xFF;
+
+                }
+
+
+              //  if((data[5]&0xff)>=254) {
+             //       MAVLinkMessage msg =  mavlinkfactory.readMavlink(data);
+                  //  listener.onNewData(msg);
                // }
+               /* DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
+                MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
+
+                try{
+                    MAVLinkMessage msg = reader.getNextMessage();
+
+                    if(msg==null){
+                        data[0]=(byte)0x00;
+                        listener.onNewData(data);
+                    }
+                    else{
+                        data[0]=(byte)0x01;
+                        listener.onNewData(data);
+                    }
+
+                } catch (Exception var6) {  ;  }
+                e.close();*/
 
             }
             mReadBuffer.clear();

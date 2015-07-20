@@ -1,5 +1,10 @@
 package kr.usis.u_drone;
 
+import org.mavlink.messages.MAVLinkMessage;
+
+import java.util.LinkedList;
+import java.util.Queue;
+
 import kr.usis.serial.driver.UsbSerialPort;
 
 /**
@@ -13,4 +18,5 @@ public class StateBuffer {
 
     public static UsbSerialPort CONNECTION = null;
 
+    public static Queue<MAVLinkMessage> RECEIEVEDATAQUEUE = new LinkedList<>();
 }

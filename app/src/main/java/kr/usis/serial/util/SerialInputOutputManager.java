@@ -29,6 +29,7 @@ import org.mavlink.messages.MAVLinkMessage;
 
 import kr.usis.serial.driver.UsbSerialPort;
 import kr.usis.u_drone.MavLinkFactory;
+import kr.usis.u_drone.StateBuffer;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -75,7 +76,7 @@ public class SerialInputOutputManager implements Runnable {
         /**
          * Called when new incoming data is available.
          */
-        public void onNewData(byte[] data);
+        public void onNewData(String data);
         //public void onNewData(MAVLinkMessage data);
         /**
          * Called when {@link SerialInputOutputManager#run()} aborts due to an
@@ -177,40 +178,17 @@ public class SerialInputOutputManager implements Runnable {
             if (listener != null) {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
-
                 try{
-                    byte tmp = data[5];
-                    if(tmp == 0x00){
-                    listener.onNewData(data);
-                }}
-                catch(Exception d){
-                    data[0]=(byte)0xFF;
-
-                }
-
-
-              //  if((data[5]&0xff)>=254) {
-             //       MAVLinkMessage msg =  mavlinkfactory.readMavlink(data);
-                  //  listener.onNewData(msg);
-               // }
-               /* DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
-                MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
-
-                try{
-                    MAVLinkMessage msg = reader.getNextMessage();
-
-                    if(msg==null){
-                        data[0]=(byte)0x00;
-                        listener.onNewData(data);
-                    }
-                    else{
-                        data[0]=(byte)0x01;
-                        listener.onNewData(data);
+                if((data[0]&0xFF)==254) {
+                    DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
+                    MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
+                    MAVLinkMessage msg = null;
+                     try{ msg = reader.getNextMessage();} catch (Exception var6){  e.close(); }
+                    StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
+                    e.close();
                     }
 
-                } catch (Exception var6) {  ;  }
-                e.close();*/
-
+                } catch(Exception d){ }
             }
             mReadBuffer.clear();
         }

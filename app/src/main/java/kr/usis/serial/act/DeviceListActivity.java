@@ -72,7 +72,7 @@ public class DeviceListActivity {
     //Scan and refresh devices - Daniel
     public void refreshDeviceList() {
 
-        new AsyncTask<Void, Void, List<UsbSerialPort>>() {
+         AsyncTask t = new AsyncTask<Void, Void, List<UsbSerialPort>>() {
             @Override
             protected List<UsbSerialPort> doInBackground(Void... params) {
                 Log.d(TAG, "Refreshing device list ...");

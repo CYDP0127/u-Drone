@@ -1,6 +1,5 @@
 package kr.usis.u_drone;
 
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
@@ -18,7 +17,6 @@ import org.mavlink.messages.MAVLinkMessage;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
@@ -29,19 +27,18 @@ import kr.usis.serial.util.HexDump;
 import kr.usis.serial.util.SerialInputOutputManager;
 
 public class MainActivity extends ActionBarActivity {
-    public  TextView textview;
+    TextView textview;
 
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
 
-    DisplayThread dThread;
     BackThread mThread;
 
     private SerialInputOutputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
 
     //Handler for getting start Input Thread. - Daniel
-   Handler mHandler = new Handler(){
+    Handler mHandler = new Handler(){
         public void handleMessage(Message msg){
             if(msg.what == 0){
                 startIoManager();
@@ -49,17 +46,6 @@ public class MainActivity extends ActionBarActivity {
         }
 
     };
-
-    Handler dHandler = new Handler(){
-        public void handleMessage(Message msg){
-            Bundle bundle = msg.getData();
-            String string = bundle.getString("test");
-            textview.append(string);
-            textview.invalidate();
-        }
-
-    };
-
 
     //handler for displaying recieved data. - Daniel
     private final SerialInputOutputManager.Listener mListener =
@@ -70,7 +56,7 @@ public class MainActivity extends ActionBarActivity {
 
                 }
                 @Override
-                public void onNewData(final String data) {
+                public void onNewData(final byte[] data) {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -80,7 +66,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             };
 
-/*    //handler for displaying recieved data. - Daniel
+ /*   //handler for displaying recieved data. - Daniel
     private final SerialInputOutputManager.Listener mListener =
             new SerialInputOutputManager.Listener() {
 
@@ -101,15 +87,18 @@ public class MainActivity extends ActionBarActivity {
 
 
     //display input data
-        private void updateReceivedData(String data) {
+        private void updateReceivedData(byte[] data) {
         //final String message = HexDump.dumpHexString(data);
 
-        textview.append(data);
-        textview.append(" .");
+        if((data[0]&255)==255)
+            textview.append("error");
+
+        textview.append("w");
+        textview.append(" ");
         textview.invalidate();
     }
 
-/*    private void updateReceivedData(MAVLinkMessage data) {
+   /* private void updateReceivedData(MAVLinkMessage data) {
         //final String message = HexDump.dumpHexString(data);
         textview.append("SysId=" + data.sysId + " CompId=" + data.componentId + " seq=" + data.sequence + " " );
         textview.append("  ");
@@ -158,17 +147,9 @@ public class MainActivity extends ActionBarActivity {
             dla = new DeviceListActivity(this);
             dla.getUSBService();
             dla.refreshDeviceList();
-
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
-
-            dThread = new DisplayThread(dHandler);
-            dThread.setDaemon(true);
-            dThread.start();
-
-      //      new displayQueue().execute();
-
             DisconnectedFlag = true;
         }
     }
@@ -180,37 +161,21 @@ public class MainActivity extends ActionBarActivity {
         DisconnectedFlag = false;
         mThread = null;
         textview.setText("");
-        mSerialIoManager.stop();
     }
 
 
-    /*private class displayQueue extends AsyncTask<Void,MAVLinkMessage,Void>{
 
-        @Override
-        protected Void doInBackground(Void... params) {
-                while(true) {
+   /* //button event
+    public void onClick(View v) {
+        DeviceListActivity dla = new DeviceListActivity(this);
+        dla.getUSBService();
+        dla.refreshDeviceList();
 
-                    if(StateBuffer.RECEIEVEDATAQUEUE.isEmpty()){
-                        try{Thread.sleep(1000);}catch (InterruptedException e) {}
-                    }
-                    else {
-                        MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
-                        textview.append("poll");
-                        publishProgress(msg);
-                    }
+        mThread = new BackThread(mHandler);
+        mThread.setDaemon(true);
+        mThread.start();
 
-                    //need to make terminating this thread function...
-                }
-        }
-
-        @Override
-        protected void onProgressUpdate(MAVLinkMessage... progress){
-                    textview.setText(progress[0].toString());
-                    textview.invalidate();
-        }
     }*/
-
-
 }
 
 //Thread for checking connection. - Daniel
@@ -239,37 +204,3 @@ class BackThread extends Thread{
 
         }
 }
-
-//Thread for checking connection. - Daniel
-class DisplayThread extends Thread{
-    Handler mHandler;
-
-
-    DisplayThread(Handler handler){
-        mHandler = handler;
-    }
-
-    public void run(){
-
-        Message msgs = mHandler.obtainMessage();
-        Bundle bundle = new Bundle();
-        int i=0;
-        while(10>=i++){
-            if(StateBuffer.RECEIEVEDATAQUEUE.isEmpty()){
-                try{Thread.sleep(1000);}catch (InterruptedException e) {;}
-            }
-            else{
-                MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
-                if(msg==null){
-                    bundle.putString("test","fail");
-                }else {
-                    bundle.putString("test", msg.toString());
-                }
-                    msgs.setData(bundle);
-                    mHandler.sendMessage(msgs);
-
-            }
-        }
-    }
-}
-

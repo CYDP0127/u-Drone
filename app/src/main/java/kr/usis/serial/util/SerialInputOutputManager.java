@@ -24,7 +24,10 @@ package kr.usis.serial.util;
 import android.hardware.usb.UsbRequest;
 import android.util.Log;
 
+import org.mavlink.messages.MAVLinkMessage;
+
 import kr.usis.serial.driver.UsbSerialPort;
+import kr.usis.u_drone.MavLinkFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -64,12 +67,14 @@ public class SerialInputOutputManager implements Runnable {
     // Synchronized by 'this'
     private Listener mListener;
 
+    private MavLinkFactory mavlinkfactory ;
+
     public interface Listener {
         /**
          * Called when new incoming data is available.
          */
         public void onNewData(byte[] data);
-
+       // public void onNewData(MAVLinkMessage data);
         /**
          * Called when {@link SerialInputOutputManager#run()} aborts due to an
          * error.
@@ -171,8 +176,11 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
 
-                if((data[0]&0xff)==254)
+              //  if((data[0]&0xff)>=254) {
+                //    MAVLinkMessage msg =  mavlinkfactory.readMavlink(data);
                     listener.onNewData(data);
+               // }
+
             }
             mReadBuffer.clear();
         }

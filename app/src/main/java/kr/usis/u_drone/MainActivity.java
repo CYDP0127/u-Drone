@@ -66,39 +66,41 @@ public class MainActivity extends ActionBarActivity {
                 }
             };
 
+ /*   //handler for displaying recieved data. - Daniel
+    private final SerialInputOutputManager.Listener mListener =
+            new SerialInputOutputManager.Listener() {
+
+                @Override
+                public void onRunError(Exception e) {
+
+                }
+                @Override
+                public void onNewData(final MAVLinkMessage data) {
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            MainActivity.this.updateReceivedData(data);
+                        }
+                    });
+                }
+            };*/
+
 
     //display input data
     private void updateReceivedData(byte[] data) {
-       // final String message = "Read " + data.length + " bytes: \n"
-       //         + HexDump.dumpHexString(data) + "\n\n";
-
         //final String message = HexDump.dumpHexString(data);
         textview.append(String.valueOf(data.length));
         textview.append(" ");
-
         textview.invalidate();
-
-            /*DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
-            MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
-
-            try{
-            while(e.available() > 0) {
-                MAVLinkMessage msg = reader.getNextMessage();
-                if(msg != null) {
-                    textview.setText(String.valueOf(msg.componentId + " " + msg.length + " " + msg.messageType+" "+msg.sysId));
-                }
-            }
-                e.close();
-            } catch (Exception var6) {;
-            }*/
-
-
-
-
-     //   textview.append(message);
-     //   textview.invalidate();
-
     }
+/*
+    private void updateReceivedData(MAVLinkMessage data) {
+        //final String message = HexDump.dumpHexString(data);
+        textview.append("SysId=" + data.sysId + " CompId=" + data.componentId + " seq=" + data.sequence + " " );
+        textview.append("  ");
+        textview.invalidate();
+    }*/
+
 
     private void startIoManager() {
         if (StateBuffer.CONNECTION!= null) {

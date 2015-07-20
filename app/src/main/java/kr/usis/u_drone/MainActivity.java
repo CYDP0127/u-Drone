@@ -147,7 +147,6 @@ public class MainActivity extends ActionBarActivity {
             dla = new DeviceListActivity(this);
             dla.getUSBService();
             dla.refreshDeviceList();
-
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();

@@ -44,10 +44,9 @@ public class MainActivity extends ActionBarActivity {
                 startIoManager();
             }
         }
-
     };
 
-    //handler for displaying recieved data. - Daniel
+    //handler for displaying received data. - Daniel
     private final SerialInputOutputManager.Listener mListener =
             new SerialInputOutputManager.Listener() {
 
@@ -143,10 +142,12 @@ public class MainActivity extends ActionBarActivity {
 
     public void connect() {
         if (!DisconnectedFlag) {
+            textview.setText("");
             Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
             dla = new DeviceListActivity(this);
             dla.getUSBService();
             dla.refreshDeviceList();
+
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
@@ -156,26 +157,15 @@ public class MainActivity extends ActionBarActivity {
 
     //disconnect button event
     public void disconnect() {
-        Toast.makeText(this, "Connection Destroyed", Toast.LENGTH_SHORT).show();
-        dla = null;
-        DisconnectedFlag = false;
-        mThread = null;
-        textview.setText("");
+        if (DisconnectedFlag) {
+            Toast.makeText(this, "Connection Destroyed", Toast.LENGTH_SHORT).show();
+            dla = null;
+            mThread = null;
+            textview.setText("");
+            DisconnectedFlag = false;
+            System.gc();
+        }
     }
-
-
-
-   /* //button event
-    public void onClick(View v) {
-        DeviceListActivity dla = new DeviceListActivity(this);
-        dla.getUSBService();
-        dla.refreshDeviceList();
-
-        mThread = new BackThread(mHandler);
-        mThread.setDaemon(true);
-        mThread.start();
-
-    }*/
 }
 
 //Thread for checking connection. - Daniel
@@ -202,5 +192,5 @@ class BackThread extends Thread{
         msg.what = 0;
         mHandler.sendMessage(msg);
 
-        }
+    }
 }

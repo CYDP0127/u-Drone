@@ -6,7 +6,7 @@
 
     <string name="refreshing">Refreshing...</string>
     <string name="demo_title">test</string>
-    <string name="ConnectButton">Connect</string>
-    <string name="DisconnectButton">Disconnect</string>
+    <string name="ConnectButton">Cnt</string>
+    <string name="DisconnectButton">DisCnt</string>
 
 </resources>

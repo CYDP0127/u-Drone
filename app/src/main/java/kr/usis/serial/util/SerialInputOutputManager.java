@@ -36,6 +36,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Utility class which services a {@link UsbSerialPort} in its {@link #run()}
@@ -168,9 +169,32 @@ public class SerialInputOutputManager implements Runnable {
             }
         }
     }
+    // put separated packet into Mavlink
+    private void MavLinkFactory(byte[] data){
+        try {
+            DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
+            MAVLinkReader reader = new MAVLinkReader(e, (byte) -2);
+            MAVLinkMessage msg = null;
+            try {
+                msg = reader.getNextMessage();
+            } catch (Exception var6) {
+                e.close();
+                return;
+            }
+            if (msg != null || !msg.equals(null)) {
+                StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
+            }
+            e.close();
+        }
+        catch(Exception var6){
+
+        }
+    }
+
 
     private void step() throws IOException {
-        byte[] tmp = new byte[512];
+        byte[] tmp = new byte[64];
+        int j=0;
         // Handle incoming data.
         int len = mDriver.read(mReadBuffer.array(), READ_WAIT_MILLIS);
         if (len > 0) {
@@ -180,27 +204,28 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
                 try{
-                    for(int i = 0;i<tmp.length;i++){
-                        if((data[0]&0xFF)!=254){
+                    for(int i = 0;i<data.length;i++){   // Separate packets
+                        if((data[i]&0xFF)!=254){
                             continue;
+                        }else{
+                            while((i<data.length-1&&(data[i+1]&0xFF)!=254)){
+                                tmp[j++] = data[i++];
+                            }
+                            tmp[j] = data[i]; j=0;
+
+                            switch((tmp[5]&0xff)){
+                                case 0:                 //heartbeat
+                                case 1:                 //SYS_STATUS
+                                case 24:                //GPS_RAW
+                                case 30:                //ATTITUDE
+                                case 33:                //GLOBAL_POSITION_INT
+                                case 35:                //RC_CHANNELS_RAW
+                                case 74:                //VFR_HUD
+                                    MavLinkFactory(tmp);
+                            }
+                            Arrays.fill(tmp, (byte) 0);  //reset array to zero
+
                         }
-
-                    }
-
-
-
-                if((data[0]&0xFF)==254) {
-                  //  mListener.onNewData("testinqueue ");
-                    DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
-                    MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
-                    MAVLinkMessage msg = null;
-                     try{ msg = reader.getNextMessage();} catch (Exception var6){  e.close(); return;}
-
-                    if(msg!=null||!msg.equals(null)) {
-                       // mListener.onNewData("pushed ");
-                        StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
-                    }
-                    e.close();
                     }
                 } catch(Exception d){ }
             }

@@ -170,6 +170,7 @@ public class SerialInputOutputManager implements Runnable {
     }
 
     private void step() throws IOException {
+        byte[] tmp = new byte[512];
         // Handle incoming data.
         int len = mDriver.read(mReadBuffer.array(), READ_WAIT_MILLIS);
         if (len > 0) {
@@ -179,15 +180,28 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
                 try{
+                    for(int i = 0;i<tmp.length;i++){
+                        if((data[0]&0xFF)!=254){
+                            continue;
+                        }
+
+                    }
+
+
+
                 if((data[0]&0xFF)==254) {
+                  //  mListener.onNewData("testinqueue ");
                     DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
                     MAVLinkReader reader = new MAVLinkReader(e, (byte)-2);
                     MAVLinkMessage msg = null;
-                     try{ msg = reader.getNextMessage();} catch (Exception var6){  e.close(); }
-                    StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
+                     try{ msg = reader.getNextMessage();} catch (Exception var6){  e.close(); return;}
+
+                    if(msg!=null||!msg.equals(null)) {
+                       // mListener.onNewData("pushed ");
+                        StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
+                    }
                     e.close();
                     }
-
                 } catch(Exception d){ }
             }
             mReadBuffer.clear();

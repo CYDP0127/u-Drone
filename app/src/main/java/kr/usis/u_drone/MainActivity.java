@@ -1,5 +1,6 @@
 package kr.usis.u_drone;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.ContactsContract;
@@ -56,7 +57,7 @@ public class MainActivity extends ActionBarActivity {
 
                 }
                 @Override
-                public void onNewData(final byte[] data) {
+                public void onNewData(final String data) {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -87,13 +88,11 @@ public class MainActivity extends ActionBarActivity {
 
 
     //display input data
-        private void updateReceivedData(byte[] data) {
+        private void updateReceivedData(String data) {
         //final String message = HexDump.dumpHexString(data);
 
-        if((data[0]&255)==255)
-            textview.append("error");
 
-        textview.append("w");
+        textview.append(data);
         textview.append(" ");
         textview.invalidate();
     }
@@ -150,6 +149,9 @@ public class MainActivity extends ActionBarActivity {
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
+
+            new Dequeue().execute();
+
             DisconnectedFlag = true;
         }
     }
@@ -161,21 +163,42 @@ public class MainActivity extends ActionBarActivity {
         DisconnectedFlag = false;
         mThread = null;
         textview.setText("");
+
     }
 
+    public class Dequeue extends AsyncTask<Void,String,Void>{
 
+        @Override
+        protected void onProgressUpdate(String... values) {
+            textview.append(values[0]);
+            textview.invalidate();
+        }
 
-   /* //button event
-    public void onClick(View v) {
-        DeviceListActivity dla = new DeviceListActivity(this);
-        dla.getUSBService();
-        dla.refreshDeviceList();
-
-        mThread = new BackThread(mHandler);
-        mThread.setDaemon(true);
-        mThread.start();
-
-    }*/
+        @Override
+        protected Void doInBackground(Void... arg0){
+            int counter = 0;
+            while(true) {
+                if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
+                    try {
+                        counter++;
+                        Thread.sleep(500);
+                        // publishProgress("sleep");
+                    } catch (InterruptedException e) {
+                        ;
+                    }
+                } else {
+                    counter = 0;
+                    MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
+                    //publishProgress("poll");
+                    if (msg != null || !msg.equals(null)) {
+                        publishProgress(msg.toString());
+                    }
+                }
+                if (counter >= 100) break;
+            }
+            return null;
+        }
+    }
 }
 
 //Thread for checking connection. - Daniel

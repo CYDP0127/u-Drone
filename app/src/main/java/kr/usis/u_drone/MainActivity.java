@@ -34,17 +34,12 @@ import kr.usis.serial.util.SerialInputOutputManager;
 
 public class MainActivity extends FragmentActivity {
 
-    TextView text_roll;
-    TextView text_yaw;
-    TextView text_pitch;
-    TextView text_altitude;
     TextView[] textView = new TextView[30];
-
 
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
 
-    BackThread mThread;
+    BackThread mThread; // Checking connection class
 
     private SerialInputOutputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
@@ -53,13 +48,14 @@ public class MainActivity extends FragmentActivity {
     Handler mHandler = new Handler(){
         public void handleMessage(Message msg){
             if(msg.what == 0){
+                // when device is connected, handler thread sends data to handler
                 startIoManager();
             }
         }
 
     };
 
-    //handler for displaying recieved data. - Daniel
+    //handler for displaying received data. - Daniel
     private final SerialInputOutputManager.Listener mListener =
             new SerialInputOutputManager.Listener() {
 
@@ -72,7 +68,7 @@ public class MainActivity extends FragmentActivity {
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            MainActivity.this.updateReceivedData(data);
+                            MainActivity.this.updateReceivedData(data); // update received data on main UI
                         }
                     });
                 }
@@ -84,6 +80,7 @@ public class MainActivity extends FragmentActivity {
         textview.append(" ");
         textview.invalidate();*/
     }
+    // sending data to SerialInputOutputManager
     private void startIoManager() {
         if (StateBuffer.CONNECTION!= null) {
             mSerialIoManager = new SerialInputOutputManager(StateBuffer.CONNECTION, mListener);
@@ -118,8 +115,6 @@ public class MainActivity extends FragmentActivity {
                 disconnect();
             }
         });
-
-
     }
 
 
@@ -153,7 +148,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for(int i =0;i<3;i++){
+            for(int i = 0; i < 3; i++){
                 textView[i].setText(strings[i]);
             }
             textView[0].setText(strings[0]);
@@ -163,7 +158,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         protected Void doInBackground(Void... arg0){
             int counter = 0;
-            String[] valuse = new String[100];
+            String[] values = new String[100];
             while(true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
                     try {
@@ -180,12 +175,12 @@ public class MainActivity extends FragmentActivity {
                     if (msg != null || !msg.equals(null)) {
                         switch(msg.messageType){
                             case 30:
-                               valuse[0]=Float.toString(((msg_attitude) msg).pitch);
-                                valuse[1]=Float.toString(((msg_attitude) msg).roll);
-                                valuse[2]=Float.toString(((msg_attitude) msg).yaw);
+                                values[0]=Float.toString(((msg_attitude) msg).pitch);
+                                values[1]=Float.toString(((msg_attitude) msg).roll);
+                                values[2]=Float.toString(((msg_attitude) msg).yaw);
                                 break;
                         }
-                        publishProgress(valuse);
+                        publishProgress(values);
 
                     }
                 }
@@ -215,10 +210,9 @@ class BackThread extends Thread{
         while(!isConnected()){
             try{Thread.sleep(1000);}catch (InterruptedException e) {;}
         }
-
         Message msg = Message.obtain();
         msg.what = 0;
         mHandler.sendMessage(msg);
 
-        }
+    }
 }

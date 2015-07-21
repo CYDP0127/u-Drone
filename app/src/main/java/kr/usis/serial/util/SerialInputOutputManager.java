@@ -154,7 +154,7 @@ public class SerialInputOutputManager implements Runnable {
                     Log.i(TAG, "Stopping mState=" + getState());
                     break;
                 }
-                step();
+                step(); // call step function below
             }
         } catch (Exception e) {
             Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
@@ -174,7 +174,7 @@ public class SerialInputOutputManager implements Runnable {
         try {
             DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
             MAVLinkReader reader = new MAVLinkReader(e, (byte) -2);
-            MAVLinkMessage msg = null;
+            MAVLinkMessage msg;
             try {
                 msg = reader.getNextMessage();
             } catch (Exception var6) {
@@ -193,8 +193,8 @@ public class SerialInputOutputManager implements Runnable {
 
 
     private void step() throws IOException {
-        byte[] tmp = new byte[64];
-        int j=0;
+        byte [] tmp = new byte[64];
+        int j = 0;
         // Handle incoming data.
         int len = mDriver.read(mReadBuffer.array(), READ_WAIT_MILLIS);
         if (len > 0) {
@@ -204,14 +204,15 @@ public class SerialInputOutputManager implements Runnable {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
                 try{
-                    for(int i = 0;i<data.length;i++){   // Separate packets
+                    Arrays.fill(tmp, (byte) 0); //reset array to zero
+                    for(int i = 0;i < data.length; i++){   // Separate packets
                         if((data[i]&0xFF)!=254){
                             continue;
-                        }else{
-                            while((i<data.length-1&&(data[i+1]&0xFF)!=254)){
+                        } else {
+                            while((i < data.length - 1 && (data[i+1]&0xFF)!=254)){
                                 tmp[j++] = data[i++];
                             }
-                            tmp[j] = data[i]; j=0;
+                            tmp[j] = data[i]; j = 0;
 
                             switch((tmp[5]&0xff)){
                                 case 0:                 //heartbeat
@@ -222,9 +223,8 @@ public class SerialInputOutputManager implements Runnable {
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
                                     MavLinkFactory(tmp);
-                            }
-                            Arrays.fill(tmp, (byte) 0);  //reset array to zero
 
+                            }
                         }
                     }
                 } catch(Exception d){ }
@@ -248,7 +248,9 @@ public class SerialInputOutputManager implements Runnable {
                 Log.d(TAG, "Writing data len=" + len);
             }
             mDriver.write(outBuff, READ_WAIT_MILLIS);
-        }*/
+        }
+
+ */
     }
 
 }

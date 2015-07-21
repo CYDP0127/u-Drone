@@ -58,7 +58,6 @@ public class DeviceListActivity {
         this.mContext = mContext;
     }
 
-
     public void getUSBService() {
         mUsbManager = (UsbManager) mContext.getSystemService(mContext.USB_SERVICE);
     }

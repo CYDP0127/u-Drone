@@ -7,6 +7,7 @@ import android.provider.ContactsContract;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -16,14 +17,23 @@ import android.widget.Toast;
 
 import org.mavlink.MAVLinkReader;
 import org.mavlink.messages.MAVLinkMessage;
+import org.mavlink.messages.MAV_AUTOPILOT;
+import org.mavlink.messages.MAV_CMD;
+import org.mavlink.messages.MAV_COMPONENT;
+import org.mavlink.messages.MAV_MODE_FLAG;
+import org.mavlink.messages.MAV_TYPE;
 import org.mavlink.messages.ardupilotmega.msg_attitude;
+import org.mavlink.messages.ardupilotmega.msg_command_long;
+import org.mavlink.messages.ardupilotmega.msg_heartbeat;
 import org.mavlink.messages.ardupilotmega.msg_rc_channels_raw;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,13 +44,9 @@ import kr.usis.serial.util.SerialInputOutputManager;
 
 public class MainActivity extends FragmentActivity {
 
-    TextView text_roll;
-    TextView text_yaw;
-    TextView text_pitch;
-    TextView text_altitude;
     TextView[] textView = new TextView[30];
 
-
+    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
 
@@ -92,12 +98,117 @@ public class MainActivity extends FragmentActivity {
     }
 
 
+    public void ARM(View v) throws IOException {
+        byte[] buff = null;
+        msg_command_long arm = new msg_command_long(1, 1);
+        arm.param1 = 1;
+        arm.param2 = 0;
+        arm.param3 = 0;
+        arm.param4 = 0;
+        arm.param5 = 0;
+        arm.param6 = 0;
+        arm.param7 = 0;
+
+        arm.sequence = StateBuffer.sequence++;
+        arm.target_system = 1;
+        arm.target_component = MAV_COMPONENT.MAV_COMP_ID_SYSTEM_CONTROL;
+        arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        arm.confirmation = 0;
+
+        Toast Checktoast = Toast.makeText(this, "ok!", Toast.LENGTH_LONG);
+        Checktoast.show();
+
+        mWriteBuffer.put(arm.encode());
+        synchronized (mWriteBuffer) {
+            int len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 10000);
+        }
+
+    }
+/*
+
+    public void DisARM(View v) throws IOException {
+        byte[] buff = null;
+        msg_heartbeat arm = new msg_heartbeat(1, 1);
+
+
+        arm.sequence = StateBuffer.sequence++;
+        //arm.type = MAV_TYPE.MAV_TYPE_GCS;
+        //arm.autopilot = MAV_AUTOPILOT.MAV_AUTOPILOT_GENERIC;
+
+
+        int len;
+        mWriteBuffer.put(arm.encode());
+        synchronized (mWriteBuffer) {
+            len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            while(true) {
+                StateBuffer.CONNECTION.write(buff, 100);
+            }
+        }
+
+    }
+
+*/
+
+/*    public void TakeOff(View v) throws IOException {
+        byte[] buff = null;
+        msg_command_long arm = new msg_command_long(1, 1);
+        arm.param1 = 0;
+        arm.param2 = 0;
+        arm.param3 = 0;
+        arm.param4 = 0;
+        arm.param5 = 0;
+        arm.param6 = 0;
+        arm.param7 = 2;
+
+        arm.sequence = StateBuffer.sequence++;
+        arm.target_system = 1;
+        arm.target_component = 1;
+        arm.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+        arm.confirmation=0;
+
+        int len;
+        mWriteBuffer.put(arm.encode());
+        synchronized (mWriteBuffer) {
+            len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 10000);
+        }
+
+    }*/
+
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
-
 
         textView[0] = (TextView)findViewById(R.id.textView15);     //PITCH
         textView[1] = (TextView)findViewById(R.id.textView17);    //ROLL
@@ -118,7 +229,6 @@ public class MainActivity extends FragmentActivity {
                 disconnect();
             }
         });
-
 
     }
 
@@ -153,17 +263,16 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for(int i =0;i<3;i++){
+            for(int i =0;i<3;i++) {
                 textView[i].setText(strings[i]);
             }
-            textView[0].setText(strings[0]);
         }
 
 
         @Override
         protected Void doInBackground(Void... arg0){
             int counter = 0;
-            String[] valuse = new String[100];
+            String[] valuse = new String[3];
             while(true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
                     try {

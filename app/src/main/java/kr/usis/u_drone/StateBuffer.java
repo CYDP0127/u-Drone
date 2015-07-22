@@ -19,4 +19,6 @@ public class StateBuffer {
     public static UsbSerialPort CONNECTION = null;
 
     public static Queue<MAVLinkMessage> RECEIEVEDATAQUEUE = new LinkedList<>();
+
+    public static int sequence =0;
 }

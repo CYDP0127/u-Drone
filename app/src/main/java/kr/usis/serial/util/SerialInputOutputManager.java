@@ -28,13 +28,11 @@ import org.mavlink.MAVLinkReader;
 import org.mavlink.messages.MAVLinkMessage;
 
 import kr.usis.serial.driver.UsbSerialPort;
-import kr.usis.u_drone.MavLinkFactory;
 import kr.usis.u_drone.StateBuffer;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -71,7 +69,6 @@ public class SerialInputOutputManager implements Runnable {
     // Synchronized by 'this'
     private Listener mListener;
 
-    private MavLinkFactory mavlinkfactory ;
 
     public interface Listener {
         /**
@@ -231,8 +228,8 @@ public class SerialInputOutputManager implements Runnable {
             }
             mReadBuffer.clear();
         }
-/*
-        // Handle outgoing data.
+
+/*        // Handle outgoing data.
         byte[] outBuff = null;
         synchronized (mWriteBuffer) {
             len = mWriteBuffer.position();

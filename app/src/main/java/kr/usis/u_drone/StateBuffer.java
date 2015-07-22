@@ -11,7 +11,7 @@ import kr.usis.serial.driver.UsbSerialPort;
  * Created by Daniel on 2015-07-16.
  */
 
-
+// StateBuffer checks connection state, usb address, que for receiving data from reading
 public class StateBuffer {
 
     public static boolean CREATEDCONNECTION = false;

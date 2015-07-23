@@ -1,5 +1,7 @@
 package kr.usis.u_drone;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -49,17 +51,24 @@ public class MainActivity extends FragmentActivity {
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
-
     BackThread mThread;
+    HBReceive hbrThread;
+    HBSend hbsThread;
+    Toast toast;
+
 
     private SerialInputOutputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
 
     //Handler for getting start Input Thread. - Daniel
-    Handler mHandler = new Handler(){
-        public void handleMessage(Message msg){
-            if(msg.what == 0){
+    Handler mHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (msg.what == 0) {
                 startIoManager();
+            }
+            if (msg.what == 1) {
+                //heartbeat receiving error
+                showErrorMsg("HEARTBEAT RECEIVING ERROR");
             }
         }
 
@@ -73,6 +82,7 @@ public class MainActivity extends FragmentActivity {
                 public void onRunError(Exception e) {
 
                 }
+
                 @Override
                 public void onNewData(final String data) {
                     MainActivity.this.runOnUiThread(new Runnable() {
@@ -85,15 +95,32 @@ public class MainActivity extends FragmentActivity {
             };
 
     //display input data
-        private void updateReceivedData(String data) {
+    private void updateReceivedData(String data) {
 /*        textview.append(data);
         textview.append(" ");
         textview.invalidate();*/
     }
+
     private void startIoManager() {
-        if (StateBuffer.CONNECTION!= null) {
+
+        if (StateBuffer.CONNECTION != null) {
+            //execute heartbeat receive thread when its connected
+
+
             mSerialIoManager = new SerialInputOutputManager(StateBuffer.CONNECTION, mListener);
             mExecutor.submit(mSerialIoManager);
+
+            hbrThread = new HBReceive(mHandler);
+            hbrThread.setDaemon(true);
+            hbrThread.start();
+
+            toast = Toast.makeText(this, "Zumrat", Toast.LENGTH_SHORT); toast.show();
+            //execute heartbeat send thread when its connected
+            hbsThread = new HBSend();
+            hbsThread.start();
+
+            toast = Toast.makeText(this, "Daniel", Toast.LENGTH_SHORT);toast.show();
+
         }
     }
 
@@ -109,14 +136,12 @@ public class MainActivity extends FragmentActivity {
         arm.param6 = 0;
         arm.param7 = 0;
 
-        arm.sequence = StateBuffer.sequence++;
+        arm.sequence = StateBuffer.increaseSequence();
+
         arm.target_system = 1;
-        arm.target_component = MAV_COMPONENT.MAV_COMP_ID_SYSTEM_CONTROL;
+        arm.target_component = 1;
         arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
         arm.confirmation = 0;
-
-        Toast Checktoast = Toast.makeText(this, "ok!", Toast.LENGTH_LONG);
-        Checktoast.show();
 
         mWriteBuffer.put(arm.encode());
         synchronized (mWriteBuffer) {
@@ -133,75 +158,28 @@ public class MainActivity extends FragmentActivity {
         }
 
     }
-/*
-
-    public void DisARM(View v) throws IOException {
-        byte[] buff = null;
-        msg_heartbeat arm = new msg_heartbeat(1, 1);
 
 
-        arm.sequence = StateBuffer.sequence++;
-        //arm.type = MAV_TYPE.MAV_TYPE_GCS;
-        //arm.autopilot = MAV_AUTOPILOT.MAV_AUTOPILOT_GENERIC;
-
-
-        int len;
-        mWriteBuffer.put(arm.encode());
-        synchronized (mWriteBuffer) {
-            len = mWriteBuffer.position();
-            if (len > 0) {
-                buff = new byte[41];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(buff, 0, len);
-                mWriteBuffer.clear();
+    //to show up error message box
+    public void showErrorMsg(String str) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder
+                .setTitle("Error Message Box")
+                .setMessage(str)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        //do some thing here which you need
+                    }
+                });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
             }
-        }
-        if (buff != null) {
-            while(true) {
-                StateBuffer.CONNECTION.write(buff, 100);
-            }
-        }
-
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
     }
-
-*/
-
-/*    public void TakeOff(View v) throws IOException {
-        byte[] buff = null;
-        msg_command_long arm = new msg_command_long(1, 1);
-        arm.param1 = 0;
-        arm.param2 = 0;
-        arm.param3 = 0;
-        arm.param4 = 0;
-        arm.param5 = 0;
-        arm.param6 = 0;
-        arm.param7 = 2;
-
-        arm.sequence = StateBuffer.sequence++;
-        arm.target_system = 1;
-        arm.target_component = 1;
-        arm.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
-        arm.confirmation=0;
-
-        int len;
-        mWriteBuffer.put(arm.encode());
-        synchronized (mWriteBuffer) {
-            len = mWriteBuffer.position();
-            if (len > 0) {
-                buff = new byte[41];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(buff, 0, len);
-                mWriteBuffer.clear();
-            }
-        }
-        if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 10000);
-        }
-
-    }*/
-
-
-
 
 
     @Override
@@ -210,9 +188,9 @@ public class MainActivity extends FragmentActivity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
 
-        textView[0] = (TextView)findViewById(R.id.textView15);     //PITCH
-        textView[1] = (TextView)findViewById(R.id.textView17);    //ROLL
-        textView[2] = (TextView)findViewById(R.id.textView18);     //YAW
+        textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
+        textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
+        textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
 
@@ -239,6 +217,7 @@ public class MainActivity extends FragmentActivity {
             dla = new DeviceListActivity(this);
             dla.getUSBService();
             dla.refreshDeviceList();
+
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
@@ -259,21 +238,21 @@ public class MainActivity extends FragmentActivity {
 
     }
 
-    public class Dequeue extends AsyncTask<Void,String,Void>{
+    public class Dequeue extends AsyncTask<Void, String, Void> {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for(int i =0;i<3;i++) {
+            for (int i = 0; i < 3; i++) {
                 textView[i].setText(strings[i]);
             }
         }
 
 
         @Override
-        protected Void doInBackground(Void... arg0){
+        protected Void doInBackground(Void... arg0) {
             int counter = 0;
             String[] valuse = new String[3];
-            while(true) {
+            while (true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
                     try {
                         counter++;
@@ -287,11 +266,11 @@ public class MainActivity extends FragmentActivity {
                     MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
                     //publishProgress("poll");
                     if (msg != null || !msg.equals(null)) {
-                        switch(msg.messageType){
+                        switch (msg.messageType) {
                             case 30:
-                               valuse[0]=Float.toString(((msg_attitude) msg).pitch);
-                                valuse[1]=Float.toString(((msg_attitude) msg).roll);
-                                valuse[2]=Float.toString(((msg_attitude) msg).yaw);
+                                valuse[0] = Float.toString(((msg_attitude) msg).pitch);
+                                valuse[1] = Float.toString(((msg_attitude) msg).roll);
+                                valuse[2] = Float.toString(((msg_attitude) msg).yaw);
                                 break;
                         }
                         publishProgress(valuse);
@@ -303,31 +282,4 @@ public class MainActivity extends FragmentActivity {
             return null;
         }
     }
-}
-
-//Thread for checking connection. - Daniel
-class BackThread extends Thread{
-    Handler mHandler;
-
-
-    BackThread(Handler handler){
-        mHandler = handler;
-    }
-
-
-    private boolean isConnected(){
-        return StateBuffer.CREATEDCONNECTION;
-    }
-
-    public void run(){
-
-        while(!isConnected()){
-            try{Thread.sleep(1000);}catch (InterruptedException e) {;}
-        }
-
-        Message msg = Message.obtain();
-        msg.what = 0;
-        mHandler.sendMessage(msg);
-
-        }
 }

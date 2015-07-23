@@ -188,6 +188,27 @@ public class SerialInputOutputManager implements Runnable {
         }
     }
 
+    private void MAVLinkHeartBeat(byte[] data){
+        try {
+            DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
+            MAVLinkReader reader = new MAVLinkReader(e, (byte) -2);
+            MAVLinkMessage msg;
+            try {
+                msg = reader.getNextMessage();
+            } catch (Exception var6) {
+                e.close();
+                return;
+            }
+            if (msg != null || !msg.equals(null)) {
+                StateBuffer.HEARTBEATQUEUE.offer(msg); // push data to queue - Daniel
+            }
+            e.close();
+        }
+        catch(Exception var6){
+
+        }
+    }
+
 
     private void step() throws IOException {
         byte [] tmp = new byte[64];
@@ -212,7 +233,6 @@ public class SerialInputOutputManager implements Runnable {
                             tmp[j] = data[i]; j = 0;
 
                             switch((tmp[5]&0xff)){
-                                case 0:                 //heartbeat
                                 case 1:                 //SYS_STATUS
                                 case 24:                //GPS_RAW
                                 case 30:                //ATTITUDE
@@ -220,7 +240,10 @@ public class SerialInputOutputManager implements Runnable {
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
                                     MavLinkFactory(tmp);
-
+                                    break;
+                                case 0:                 //heartbeat
+                                    MAVLinkHeartBeat(tmp);
+                                    break;
                             }
                         }
                     }

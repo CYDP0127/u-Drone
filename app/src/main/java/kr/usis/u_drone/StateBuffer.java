@@ -23,7 +23,7 @@ public class StateBuffer {
     public static int sequence =0;
 
     public static synchronized int increaseSequence(){
-        return (sequence = (StateBuffer.sequence++) % 255);
+        return (sequence = (StateBuffer.sequence++) % 256);
     }
 
 

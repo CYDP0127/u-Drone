@@ -70,6 +70,9 @@ public class MainActivity extends FragmentActivity {
                 //heartbeat receiving error
                 showErrorMsg("HEARTBEAT RECEIVING ERROR");
             }
+            if(msg.what == 255){
+                showErrorMsg("HEARTBEAT RECEIVING ERROR !!!!");
+            }
         }
 
     };
@@ -276,6 +279,8 @@ public class MainActivity extends FragmentActivity {
                         publishProgress(valuse);
 
                     }
+
+
                 }
                 if (counter >= 1000) break;
             }

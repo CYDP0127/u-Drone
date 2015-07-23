@@ -14,20 +14,25 @@ import java.nio.ByteBuffer;
 /**
  * Created by Daniel on 2015-07-23.
  */
-public class HBSend extends Thread{
+public class HBSend extends Thread {
 
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
 
-    public void run(){
-        while(true){
-            //for checking heartbeat at every second.
-            try {  Thread.sleep(1000);} catch (InterruptedException e) { }
+    public void run() {
 
-            byte[] buff = null;
-            msg_heartbeat hb = new msg_heartbeat(1, 1);
-            hb.sequence = StateBuffer.increaseSequence();
-            hb.mavlink_version = 3;
+        byte[] buff = null;
+        msg_heartbeat hb = new msg_heartbeat(1, 1);
+        hb.mavlink_version = 3;
+
+        while (true) {
+            //for checking heartbeat at every second.
             try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+
+            try {
+                hb.sequence = StateBuffer.increaseSequence();
                 mWriteBuffer.put(hb.encode());
                 synchronized (mWriteBuffer) {
                     int len = mWriteBuffer.position();
@@ -41,10 +46,9 @@ public class HBSend extends Thread{
                 if (buff != null) {
                     StateBuffer.CONNECTION.write(buff, 1000);
                 }
-            }catch(Exception e){
+            } catch (Exception e) {
 
             }
-
 
 
         }

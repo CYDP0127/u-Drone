@@ -56,6 +56,8 @@ public class MainActivity extends FragmentActivity {
     BackThread mThread;
     HBReceive hbrThread;
     HBSend hbsThread;
+    TakeOff toThread;
+
     Toast toast;
 
 
@@ -72,7 +74,7 @@ public class MainActivity extends FragmentActivity {
                 //heartbeat receiving error
                 showErrorMsg("HEARTBEAT RECEIVING ERROR");
             }
-            if(msg.what == 255){
+            if(msg.what == 255 || msg.what == 200){
                 showErrorMsg("HEARTBEAT RECEIVING ERROR !!!!");
             }
         }
@@ -115,16 +117,13 @@ public class MainActivity extends FragmentActivity {
             mSerialIoManager = new SerialInputOutputManager(StateBuffer.CONNECTION, mListener);
             mExecutor.submit(mSerialIoManager);
 
-            hbrThread = new HBReceive(mHandler);
+/*            hbrThread = new HBReceive(mHandler);
             hbrThread.setDaemon(true);
             hbrThread.start();
-
-            toast = Toast.makeText(this, "Zumrat", Toast.LENGTH_SHORT); toast.show();
+            */
             //execute heartbeat send thread when its connected
             hbsThread = new HBSend();
             hbsThread.start();
-
-            toast = Toast.makeText(this, "Daniel", Toast.LENGTH_SHORT);toast.show();
 
         }
     }
@@ -132,18 +131,23 @@ public class MainActivity extends FragmentActivity {
 
     public void TakeOff(View v) throws IOException {
         byte[] buff = null;
-        msg_rc_channels_override arm = new msg_rc_channels_override(1, 1);
-        arm.chan1_raw = 1000;
-        arm.chan2_raw = 1000;
-        arm.chan3_raw = 1000;
-        arm.chan4_raw = 1000;
-        arm.chan5_raw = 1000;
-        arm.chan6_raw = 1000;
-        arm.chan7_raw = 1000;
-        arm.chan8_raw = 1000;
+        msg_command_long arm = new msg_command_long(1,1);
+        arm.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+
+        arm.param1 = 0;
+        arm.param2 = 0;
+        arm.param3 = 0;
+        arm.param4 = 0;
+        arm.param5 = 0;
+        arm.param6 = 0;
+        arm.param7 = 2;
+
         arm.sequence = StateBuffer.increaseSequence();
         arm.target_system = 1;
         arm.target_component = 1;
+        arm.confirmation = 0;
+
+
         mWriteBuffer.put(arm.encode());
 
         synchronized (mWriteBuffer) {
@@ -156,7 +160,7 @@ public class MainActivity extends FragmentActivity {
             }
         }
         if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 1000);
+            StateBuffer.CONNECTION.write(buff, 500);
         }
 
     }
@@ -265,6 +269,11 @@ public class MainActivity extends FragmentActivity {
         textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
         textView[3] = (TextView) findViewById(R.id.textView22);     //sequence
+        textView[4] = (TextView) findViewById(R.id.textView23);     //MAVTYPE
+        textView[5] = (TextView) findViewById(R.id.textView24);     //AUTOPILOT
+        textView[6] = (TextView) findViewById(R.id.textView25);     //BASEMODE
+        textView[7] = (TextView) findViewById(R.id.textView26);     //SYSTEMSTATUS
+        textView[8] = (TextView) findViewById(R.id.textView27);     //VERSION
 
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
@@ -317,7 +326,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 9; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -326,7 +335,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         protected Void doInBackground(Void... arg0) {
             int counter = 0;
-            String[] valuse = new String[4];
+            String[] valuse = new String[10];
             while (true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
                     try {
@@ -348,6 +357,14 @@ public class MainActivity extends FragmentActivity {
                                 valuse[2] = Float.toString(((msg_attitude) msg).yaw);
                                 valuse[3] = Integer.toString(StateBuffer.sequence);
                                 break;
+                            case 0:
+                                valuse[4] = Integer.toString(((msg_heartbeat) msg).type);
+                                valuse[5] = Integer.toString(((msg_heartbeat) msg).autopilot);
+                                valuse[6] = Integer.toString(((msg_heartbeat) msg).base_mode);
+                                valuse[7] = Integer.toString(((msg_heartbeat) msg).system_status);
+                                valuse[8] = Integer.toString(((msg_heartbeat) msg).mavlink_version);
+
+
                         }
                         publishProgress(valuse);
 

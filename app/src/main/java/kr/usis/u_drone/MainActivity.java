@@ -22,11 +22,13 @@ import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.MAV_AUTOPILOT;
 import org.mavlink.messages.MAV_CMD;
 import org.mavlink.messages.MAV_COMPONENT;
+import org.mavlink.messages.MAV_MODE;
 import org.mavlink.messages.MAV_MODE_FLAG;
 import org.mavlink.messages.MAV_TYPE;
 import org.mavlink.messages.ardupilotmega.msg_attitude;
 import org.mavlink.messages.ardupilotmega.msg_command_long;
 import org.mavlink.messages.ardupilotmega.msg_heartbeat;
+import org.mavlink.messages.ardupilotmega.msg_rc_channels_override;
 import org.mavlink.messages.ardupilotmega.msg_rc_channels_raw;
 import org.w3c.dom.Text;
 
@@ -128,10 +130,78 @@ public class MainActivity extends FragmentActivity {
     }
 
 
+    public void TakeOff(View v) throws IOException {
+        byte[] buff = null;
+        msg_rc_channels_override arm = new msg_rc_channels_override(1, 1);
+        arm.chan1_raw = 1000;
+        arm.chan2_raw = 1000;
+        arm.chan3_raw = 1000;
+        arm.chan4_raw = 1000;
+        arm.chan5_raw = 1000;
+        arm.chan6_raw = 1000;
+        arm.chan7_raw = 1000;
+        arm.chan8_raw = 1000;
+        arm.sequence = StateBuffer.increaseSequence();
+        arm.target_system = 1;
+        arm.target_component = 1;
+        mWriteBuffer.put(arm.encode());
+
+        synchronized (mWriteBuffer) {
+            int len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 1000);
+        }
+
+    }
+
+
     public void ARM(View v) throws IOException {
         byte[] buff = null;
         msg_command_long arm = new msg_command_long(1, 1);
         arm.param1 = 1;
+        arm.param2 = 0;
+        arm.param3 = 0;
+        arm.param4 = 0;
+        arm.param5 = 0;
+        arm.param6 = 0;
+        arm.param7 = 0;
+
+        arm.sequence = StateBuffer.increaseSequence();
+
+        arm.target_system = 1;
+        arm.target_component = 1;
+        //arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        arm.confirmation = 0;
+
+        mWriteBuffer.put(arm.encode());
+        synchronized (mWriteBuffer) {
+            int len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 10000);
+        }
+
+    }
+
+
+    public void DisARM(View v) throws IOException {
+        byte[] buff = null;
+        msg_command_long arm = new msg_command_long(1, 1);
+        arm.param1 = 0;
         arm.param2 = 0;
         arm.param3 = 0;
         arm.param4 = 0;
@@ -194,6 +264,8 @@ public class MainActivity extends FragmentActivity {
         textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
         textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
+        textView[3] = (TextView) findViewById(R.id.textView22);     //sequence
+
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
 
@@ -245,7 +317,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -254,7 +326,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         protected Void doInBackground(Void... arg0) {
             int counter = 0;
-            String[] valuse = new String[3];
+            String[] valuse = new String[4];
             while (true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
                     try {
@@ -274,6 +346,7 @@ public class MainActivity extends FragmentActivity {
                                 valuse[0] = Float.toString(((msg_attitude) msg).pitch);
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
                                 valuse[2] = Float.toString(((msg_attitude) msg).yaw);
+                                valuse[3] = Integer.toString(StateBuffer.sequence);
                                 break;
                         }
                         publishProgress(valuse);

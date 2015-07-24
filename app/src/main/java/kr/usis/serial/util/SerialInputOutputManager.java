@@ -233,7 +233,7 @@ public class SerialInputOutputManager implements Runnable {
                             tmp[j] = data[i]; j = 0;
 
                             switch((tmp[5]&0xff)){
-                                case 0:
+
                                 case 1:                 //SYS_STATUS
                                 case 24:                //GPS_RAW
                                 case 30:                //ATTITUDE
@@ -242,9 +242,9 @@ public class SerialInputOutputManager implements Runnable {
                                 case 74:                //VFR_HUD
                                     MavLinkFactory(tmp);
                                     break;
-                                                 //heartbeat
-                                    //MAVLinkHeartBeat(tmp);
-                                   // break;
+                                case 0:               //heartbeat
+                                    MAVLinkHeartBeat(tmp);
+                                    break;
                             }
                         }
                     }

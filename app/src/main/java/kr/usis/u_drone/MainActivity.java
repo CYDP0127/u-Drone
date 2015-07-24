@@ -50,13 +50,13 @@ public class MainActivity extends FragmentActivity {
 
     TextView[] textView = new TextView[30];
 
-    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
+    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(1024);
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
     BackThread mThread;
     HBReceive hbrThread;
     HBSend hbsThread;
-    TakeOff toThread;
+    //TakeOff toThread;
 
     Toast toast;
 
@@ -117,10 +117,12 @@ public class MainActivity extends FragmentActivity {
             mSerialIoManager = new SerialInputOutputManager(StateBuffer.CONNECTION, mListener);
             mExecutor.submit(mSerialIoManager);
 
-/*            hbrThread = new HBReceive(mHandler);
+
+            //execute heartbeat receive thread when its connected
+            hbrThread = new HBReceive(mHandler);
             hbrThread.setDaemon(true);
             hbrThread.start();
-            */
+
             //execute heartbeat send thread when its connected
             hbsThread = new HBSend();
             hbsThread.start();
@@ -140,14 +142,14 @@ public class MainActivity extends FragmentActivity {
         arm.param4 = 0;
         arm.param5 = 0;
         arm.param6 = 0;
-        arm.param7 = 2;
+        arm.param7 = 1;
 
         arm.sequence = StateBuffer.increaseSequence();
         arm.target_system = 1;
         arm.target_component = 1;
         arm.confirmation = 0;
 
-
+        mWriteBuffer.clear();
         mWriteBuffer.put(arm.encode());
 
         synchronized (mWriteBuffer) {
@@ -160,7 +162,7 @@ public class MainActivity extends FragmentActivity {
             }
         }
         if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 500);
+            StateBuffer.CONNECTION.write(buff, 1000);
         }
 
     }
@@ -181,9 +183,10 @@ public class MainActivity extends FragmentActivity {
 
         arm.target_system = 1;
         arm.target_component = 1;
-        //arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+
         arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
-        arm.confirmation = 0;
+        arm.confirmation = 1;
+        mWriteBuffer.clear();
 
         mWriteBuffer.put(arm.encode());
         synchronized (mWriteBuffer) {
@@ -219,7 +222,7 @@ public class MainActivity extends FragmentActivity {
         arm.target_component = 1;
         arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
         arm.confirmation = 0;
-
+        mWriteBuffer.clear();
         mWriteBuffer.put(arm.encode());
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
@@ -268,12 +271,8 @@ public class MainActivity extends FragmentActivity {
         textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
         textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
-        textView[3] = (TextView) findViewById(R.id.textView22);     //sequence
-        textView[4] = (TextView) findViewById(R.id.textView23);     //MAVTYPE
-        textView[5] = (TextView) findViewById(R.id.textView24);     //AUTOPILOT
-        textView[6] = (TextView) findViewById(R.id.textView25);     //BASEMODE
-        textView[7] = (TextView) findViewById(R.id.textView26);     //SYSTEMSTATUS
-        textView[8] = (TextView) findViewById(R.id.textView27);     //VERSION
+
+
 
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
@@ -326,7 +325,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < 3; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -348,22 +347,13 @@ public class MainActivity extends FragmentActivity {
                 } else {
                     counter = 0;
                     MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
-                    //publishProgress("poll");
                     if (msg != null || !msg.equals(null)) {
                         switch (msg.messageType) {
                             case 30:
                                 valuse[0] = Float.toString(((msg_attitude) msg).pitch);
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
                                 valuse[2] = Float.toString(((msg_attitude) msg).yaw);
-                                valuse[3] = Integer.toString(StateBuffer.sequence);
                                 break;
-                            case 0:
-                                valuse[4] = Integer.toString(((msg_heartbeat) msg).type);
-                                valuse[5] = Integer.toString(((msg_heartbeat) msg).autopilot);
-                                valuse[6] = Integer.toString(((msg_heartbeat) msg).base_mode);
-                                valuse[7] = Integer.toString(((msg_heartbeat) msg).system_status);
-                                valuse[8] = Integer.toString(((msg_heartbeat) msg).mavlink_version);
-
 
                         }
                         publishProgress(valuse);

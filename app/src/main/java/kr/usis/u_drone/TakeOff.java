@@ -1,3 +1,4 @@
+/*
 package kr.usis.u_drone;
 
 import android.os.Handler;
@@ -9,9 +10,11 @@ import org.mavlink.messages.ardupilotmega.msg_rc_channels_override;
 
 import java.nio.ByteBuffer;
 
+*/
 /**
  * Created by Daniel on 2015-07-23.
- */
+ *//*
+
 public class TakeOff extends Thread {
     Handler mHandler;
     int count = 0;
@@ -43,7 +46,8 @@ public class TakeOff extends Thread {
                 arm.target_system = 1;
                 arm.target_component = 1;
                 arm.confirmation = 0;
-               /* byte[] buff = null;
+               */
+/* byte[] buff = null;
                 msg_rc_channels_override arm = new msg_rc_channels_override(1, 1);
                 arm.chan1_raw = 1000;  //roll
                 arm.chan2_raw = 1000;  //pitch
@@ -55,7 +59,8 @@ public class TakeOff extends Thread {
                 arm.chan8_raw = 0;
                 arm.sequence = StateBuffer.increaseSequence();
                 arm.target_system = 1;
-                arm.target_component = 1;*/
+                arm.target_component = 1;*//*
+
                 mWriteBuffer.put(arm.encode());
 
                 synchronized (mWriteBuffer) {
@@ -81,3 +86,4 @@ public class TakeOff extends Thread {
         }
     }
 }
+*/

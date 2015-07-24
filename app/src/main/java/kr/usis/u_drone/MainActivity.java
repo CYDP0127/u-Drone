@@ -37,6 +37,7 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import org.mavlink.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
@@ -50,13 +51,13 @@ public class MainActivity extends FragmentActivity {
 
     TextView[] textView = new TextView[30];
 
-    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(1024);
+    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
     BackThread mThread;
     HBReceive hbrThread;
     HBSend hbsThread;
-    //TakeOff toThread;
+    TakeOff toThread;
 
     Toast toast;
 
@@ -117,12 +118,10 @@ public class MainActivity extends FragmentActivity {
             mSerialIoManager = new SerialInputOutputManager(StateBuffer.CONNECTION, mListener);
             mExecutor.submit(mSerialIoManager);
 
-
-            //execute heartbeat receive thread when its connected
-            hbrThread = new HBReceive(mHandler);
+/*            hbrThread = new HBReceive(mHandler);
             hbrThread.setDaemon(true);
             hbrThread.start();
-
+            */
             //execute heartbeat send thread when its connected
             hbsThread = new HBSend();
             hbsThread.start();
@@ -133,24 +132,24 @@ public class MainActivity extends FragmentActivity {
 
     public void TakeOff(View v) throws IOException {
         byte[] buff = null;
-        msg_command_long arm = new msg_command_long(1,1);
-        arm.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
+        msg_command_long msg = new msg_command_long(1,1);
+        msg.command = MAV_CMD.MAV_CMD_NAV_TAKEOFF;
 
-        arm.param1 = 0;
-        arm.param2 = 0;
-        arm.param3 = 0;
-        arm.param4 = 0;
-        arm.param5 = 0;
-        arm.param6 = 0;
-        arm.param7 = 1;
+        msg.param1 = 0;
+        msg.param2 = 0;
+        msg.param3 = 0;
+        msg.param4 = 0;
+        msg.param5 = 0;
+        msg.param6 = 0;
+        msg.param7 = 2;
 
-        arm.sequence = StateBuffer.increaseSequence();
-        arm.target_system = 1;
-        arm.target_component = 1;
-        arm.confirmation = 0;
+        msg.sequence = StateBuffer.increaseSequence();
+        msg.target_system = 1;
+        msg.target_component = 1;
+        msg.confirmation = 0;
 
-        mWriteBuffer.clear();
-        mWriteBuffer.put(arm.encode());
+
+        mWriteBuffer.put(msg.encode());
 
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
@@ -162,7 +161,7 @@ public class MainActivity extends FragmentActivity {
             }
         }
         if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 1000);
+            StateBuffer.CONNECTION.write(buff, 500);
         }
 
     }
@@ -170,25 +169,23 @@ public class MainActivity extends FragmentActivity {
 
     public void ARM(View v) throws IOException {
         byte[] buff = null;
-        msg_command_long arm = new msg_command_long(1, 1);
-        arm.param1 = 1;
-        arm.param2 = 0;
-        arm.param3 = 0;
-        arm.param4 = 0;
-        arm.param5 = 0;
-        arm.param6 = 0;
-        arm.param7 = 0;
+            msg_command_long msg = new msg_command_long(1, 1);
+        msg.param1 = 1;
+        msg.param2 = 0;
+        msg.param3 = 0;
+        msg.param4 = 0;
+        msg.param5 = 0;
+        msg.param6 = 0;
+        msg.param7 = 0;
 
-        arm.sequence = StateBuffer.increaseSequence();
+        msg.sequence = StateBuffer.increaseSequence();
 
-        arm.target_system = 1;
-        arm.target_component = 1;
+        msg.target_system = 1;
+        msg.target_component = 1;
+        msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        msg.confirmation = 0;
 
-        arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
-        arm.confirmation = 1;
-        mWriteBuffer.clear();
-
-        mWriteBuffer.put(arm.encode());
+        mWriteBuffer.put(msg.encode());
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
             if (len > 0) {
@@ -198,6 +195,7 @@ public class MainActivity extends FragmentActivity {
                 mWriteBuffer.clear();
             }
         }
+
         if (buff != null) {
             StateBuffer.CONNECTION.write(buff, 10000);
         }
@@ -207,23 +205,23 @@ public class MainActivity extends FragmentActivity {
 
     public void DisARM(View v) throws IOException {
         byte[] buff = null;
-        msg_command_long arm = new msg_command_long(1, 1);
-        arm.param1 = 0;
-        arm.param2 = 0;
-        arm.param3 = 0;
-        arm.param4 = 0;
-        arm.param5 = 0;
-        arm.param6 = 0;
-        arm.param7 = 0;
+        msg_command_long msg = new msg_command_long(1, 1);
+        msg.param1 = 0;
+        msg.param2 = 0;
+        msg.param3 = 0;
+        msg.param4 = 0;
+        msg.param5 = 0;
+        msg.param6 = 0;
+        msg.param7 = 0;
 
-        arm.sequence = StateBuffer.increaseSequence();
+        msg.sequence = StateBuffer.increaseSequence();
 
-        arm.target_system = 1;
-        arm.target_component = 1;
-        arm.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
-        arm.confirmation = 0;
-        mWriteBuffer.clear();
-        mWriteBuffer.put(arm.encode());
+        msg.target_system = 1;
+        msg.target_component = 1;
+        msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        msg.confirmation = 0;
+
+        mWriteBuffer.put(msg.encode());
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
             if (len > 0) {
@@ -271,8 +269,12 @@ public class MainActivity extends FragmentActivity {
         textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
         textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
-
-
+        textView[3] = (TextView) findViewById(R.id.textView22);     //sequence
+        textView[4] = (TextView) findViewById(R.id.textView23);     //MAVTYPE
+        textView[5] = (TextView) findViewById(R.id.textView24);     //AUTOPILOT
+        textView[6] = (TextView) findViewById(R.id.textView25);     //BASEMODE
+        textView[7] = (TextView) findViewById(R.id.textView26);     //SYSTEMSTATUS
+        textView[8] = (TextView) findViewById(R.id.textView27);     //VERSION
 
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
@@ -325,7 +327,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 9; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -347,13 +349,22 @@ public class MainActivity extends FragmentActivity {
                 } else {
                     counter = 0;
                     MAVLinkMessage msg = StateBuffer.RECEIEVEDATAQUEUE.poll();
+                    //publishProgress("poll");
                     if (msg != null || !msg.equals(null)) {
                         switch (msg.messageType) {
                             case 30:
                                 valuse[0] = Float.toString(((msg_attitude) msg).pitch);
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
                                 valuse[2] = Float.toString(((msg_attitude) msg).yaw);
+                                valuse[3] = Integer.toString(StateBuffer.sequence);
                                 break;
+                            case 0:
+                                valuse[4] = Integer.toString(((msg_heartbeat) msg).type);
+                                valuse[5] = Integer.toString(((msg_heartbeat) msg).autopilot);
+                                valuse[6] = Integer.toString(((msg_heartbeat) msg).base_mode);
+                                valuse[7] = Integer.toString(((msg_heartbeat) msg).system_status);
+                                valuse[8] = Integer.toString(((msg_heartbeat) msg).mavlink_version);
+
 
                         }
                         publishProgress(valuse);

@@ -8,5 +8,6 @@
     <string name="demo_title">test</string>
     <string name="ConnectButton">Cnt</string>
     <string name="DisconnectButton">DisCnt</string>
+    <string name="TakeOFF">Take off</string>
 
 </resources>

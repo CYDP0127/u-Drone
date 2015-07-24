@@ -187,6 +187,7 @@ public class MainActivity extends FragmentActivity {
         msg.target_system = 1;
         msg.target_component = 1;
         msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+        //MAV_CMD_COMPONENT_CONTROL = 250;
         msg.confirmation = 0;
 
         mWriteBuffer.put(msg.encode());
@@ -238,7 +239,38 @@ public class MainActivity extends FragmentActivity {
         if (buff != null) {
             StateBuffer.CONNECTION.write(buff, 10000);
         }
+    }
 
+    public void YawToLeft(View v) throws IOException {
+        // sending yaw
+        byte[] buff = null;
+        msg_rc_channels_override msg = new msg_rc_channels_override(1, 1);
+        msg.chan1_raw = 0;  //roll
+        msg.chan2_raw = 0;  //pitch
+        msg.chan3_raw = 0;  //throttle
+        msg.chan4_raw = 1300;   //yaw
+        msg.chan5_raw = 0;
+        msg.chan6_raw = 0;
+        msg.chan7_raw = 0;
+        msg.chan8_raw = 0;
+        msg.sequence = StateBuffer.increaseSequence();
+        msg.target_system = 1;
+        msg.target_component = 1;
+        Toast.makeText(this, "Yaw button is pressed", Toast.LENGTH_SHORT).show();
+        mWriteBuffer.put(msg.encode());
+
+        synchronized (mWriteBuffer) {
+            int len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[41];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 500);
+        }
     }
 
 

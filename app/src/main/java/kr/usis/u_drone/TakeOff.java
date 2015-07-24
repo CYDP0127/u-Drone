@@ -17,6 +17,7 @@ import java.nio.ByteBuffer;
 
 public class TakeOff extends Thread {
     Handler mHandler;
+    Handler mHandler;
     int count = 0;
 
     TakeOff(Handler handler) {

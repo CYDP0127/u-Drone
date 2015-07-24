@@ -27,9 +27,14 @@ import org.mavlink.messages.MAV_MODE_FLAG;
 import org.mavlink.messages.MAV_TYPE;
 import org.mavlink.messages.ardupilotmega.msg_attitude;
 import org.mavlink.messages.ardupilotmega.msg_command_long;
+import org.mavlink.messages.ardupilotmega.msg_global_position_int;
+import org.mavlink.messages.ardupilotmega.msg_gps_raw_int;
 import org.mavlink.messages.ardupilotmega.msg_heartbeat;
+import org.mavlink.messages.ardupilotmega.msg_radio;
 import org.mavlink.messages.ardupilotmega.msg_rc_channels_override;
 import org.mavlink.messages.ardupilotmega.msg_rc_channels_raw;
+import org.mavlink.messages.ardupilotmega.msg_sys_status;
+import org.mavlink.messages.ardupilotmega.msg_vfr_hud;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
@@ -266,8 +271,14 @@ public class MainActivity extends FragmentActivity {
         setContentView(R.layout.activity_main);
 
         textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
-        textView[1] = (TextView) findViewById(R.id.textView17);    //ROLL
+        textView[1] = (TextView) findViewById(R.id.textView17);     //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
+        textView[3] = (TextView) findViewById(R.id.textView11);     //rssi
+        textView[4] = (TextView) findViewById(R.id.textView12);     //ramrssi
+        textView[5] = (TextView) findViewById(R.id.textView23);     //voltage battery
+        textView[6] = (TextView) findViewById(R.id.textView24);     //Altitude
+        textView[7] = (TextView) findViewById(R.id.textView13);     //HDOP
+        textView[8] = (TextView) findViewById(R.id.textView14);     //Number of satellites visible
 
 
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
@@ -320,7 +331,7 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 9; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -329,6 +340,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         protected Void doInBackground(Void... arg0) {
             int counter = 0;
+
             String[] valuse = new String[10];
             while (true) {
                 if (StateBuffer.RECEIEVEDATAQUEUE.isEmpty()) {
@@ -350,8 +362,22 @@ public class MainActivity extends FragmentActivity {
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
                                 valuse[2] = Float.toString(((msg_attitude) msg).yaw);
                                 break;
-
-
+                            case 166:
+                                valuse[3] = Integer.toString(((msg_radio) msg).rssi);
+                                valuse[4] = Integer.toString(((msg_radio) msg).remrssi);
+                                break;
+                            case 1:
+                                float tmp1 = (((msg_sys_status) msg).voltage_battery)/1000f;
+                                String tmp2 = Float.toString(Math.round(tmp1*100f)/100f);
+                                valuse[5] = tmp2 +"V";
+                                break;
+                            case 74:
+                                valuse[6] = Float.toString(Math.round((((msg_vfr_hud) msg).alt)*100f)/100f);
+                                break;
+                            case 24:
+                                valuse[7] = Integer.toString(((msg_gps_raw_int) msg).eph);
+                                valuse[8] = Integer.toString(((msg_gps_raw_int) msg).satellites_visible);
+                                break;
                         }
                         publishProgress(valuse);
 

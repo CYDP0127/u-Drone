@@ -240,6 +240,7 @@ public class SerialInputOutputManager implements Runnable {
                                 case 33:                //GLOBAL_POSITION_INT
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
+                                case 166:
                                     MavLinkFactory(tmp);
                                     break;
                                 case 0:               //heartbeat

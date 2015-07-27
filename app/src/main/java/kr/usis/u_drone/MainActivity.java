@@ -248,7 +248,7 @@ public class MainActivity extends FragmentActivity {
         msg.chan1_raw = 0;  //roll
         msg.chan2_raw = 0;  //pitch
         msg.chan3_raw = 0;  //throttle
-        msg.chan4_raw = 1300;   //yaw
+        msg.chan4_raw = 1505;   //yaw
         msg.chan5_raw = 0;
         msg.chan6_raw = 0;
         msg.chan7_raw = 0;
@@ -269,7 +269,7 @@ public class MainActivity extends FragmentActivity {
             }
         }
         if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 500);
+            StateBuffer.CONNECTION.write(buff, 1000);
         }
     }
 

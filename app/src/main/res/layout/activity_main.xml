@@ -185,18 +185,19 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Yaw Left"
+                android:text="throttle up"
                 android:onClick="YawToLeft"
                 android:id="@+id/button4"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/button6"
-                android:layout_toEndOf="@+id/button6" />
+                android:layout_toLeftOf="@+id/button7"
+                android:layout_toStartOf="@+id/button7" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="throttle down"
                 android:id="@+id/button5"
                 android:layout_below="@+id/button6"
                 android:layout_toRightOf="@+id/button6"
@@ -206,7 +207,7 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="yaw left"
                 android:id="@+id/button6"
                 android:layout_below="@+id/button4"
                 android:layout_alignParentLeft="true"
@@ -218,7 +219,7 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="yaw right"
                 android:id="@+id/button7"
                 android:layout_below="@+id/button4"
                 android:layout_toRightOf="@+id/button5"
@@ -228,17 +229,18 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="pitch up"
                 android:id="@+id/button8"
                 android:layout_above="@+id/button7"
                 android:layout_toLeftOf="@+id/button2"
-                android:layout_toStartOf="@+id/button2" />
+                android:layout_alignLeft="@+id/button11"
+                android:layout_alignStart="@+id/button11" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="roll right"
                 android:id="@+id/button9"
                 android:layout_below="@+id/button8"
                 android:layout_alignLeft="@+id/button2"
@@ -248,17 +250,17 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="roll left"
                 android:id="@+id/button10"
-                android:layout_below="@+id/button8"
-                android:layout_toLeftOf="@+id/button8"
-                android:layout_toStartOf="@+id/button8" />
+                android:layout_above="@+id/button11"
+                android:layout_toLeftOf="@+id/button11"
+                android:layout_toStartOf="@+id/button11" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="New Button"
+                android:text="pitch down"
                 android:id="@+id/button11"
                 android:layout_below="@+id/button9"
                 android:layout_toLeftOf="@+id/button9"

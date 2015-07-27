@@ -21,7 +21,11 @@ public class StateBuffer {
     public static Queue<MAVLinkMessage> RECEIEVEDATAQUEUE = new LinkedList<>();
 
     public static Queue<MAVLinkMessage> HEARTBEATQUEUE = new LinkedList<>();
+
+    public static Queue <byte [] > BufferStorage = new LinkedList<>();
+
     public static int sequence = 0;
+    public static boolean flagThread_ch_send_Run = false;
 
     public static synchronized int increaseSequence(){
         StateBuffer.sequence++;

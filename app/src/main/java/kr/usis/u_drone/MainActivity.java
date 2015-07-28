@@ -197,18 +197,19 @@ public class MainActivity extends FragmentActivity {
 
 
     public void TakeOffInit() throws IOException {
-        msg_rc_channels_override msg = getChannelOvr();
-        msg.chan1_raw = 65535;
-        msg.chan2_raw = 65535;
-        msg.chan3_raw = 1105;
-        msg.chan4_raw = 65535;
-        msg.chan5_raw = 65535;
-        msg.chan6_raw = 65535;
-        msg.chan7_raw = 65535;
-        msg.chan8_raw = 65535;
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(msg.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
+
+            msg_rc_channels_override msg = getChannelOvr();
+            msg.chan1_raw = 65535;
+            msg.chan2_raw = 65535;
+            msg.chan3_raw = 1105;
+            msg.chan4_raw = 65535;
+            msg.chan5_raw = 65535;
+            msg.chan6_raw = 65535;
+            msg.chan7_raw = 65535;
+            msg.chan8_raw = 65535;
+            StateBuffer.flagThread_ch_send_Run = false;
+            StateBuffer.BufferStorage.offer(msg.encode());
+            StateBuffer.flagThread_ch_send_Run = true;
     }
 
     public void Arming() throws IOException {
@@ -249,22 +250,26 @@ public class MainActivity extends FragmentActivity {
 
     //ARM Button event
     public void ARM(View v) throws IOException {
-        SetMode(MAV_SET_MODE.STABILIZE);
-        Arming();
-        _Get_MissionReq();
-        TakeOffInit();
+        if (StateBuffer.CREATEDCONNECTION) {
+            SetMode(MAV_SET_MODE.STABILIZE);
+            Arming();
+            _Get_MissionReq();
+            TakeOffInit();
+        }
     }
 
     // TAKEOFF Button event
     // Probably have to put sleep between functions.
     public void TakeOff(View v) throws Exception {
-        call_mission_count();
-        GetMsg_Waypoint();
-        takeoff_();
-        GetMissionItem_LoiterUnli();
-        call_mission_accepted();
-        SetMode(MAV_SET_MODE.AUTO);
-        DuringTakingOff();
+        if (StateBuffer.CREATEDCONNECTION) {
+            call_mission_count();
+            GetMsg_Waypoint();
+            takeoff_();
+            GetMissionItem_LoiterUnli();
+            call_mission_accepted();
+            SetMode(MAV_SET_MODE.AUTO);
+            DuringTakingOff();
+        }
     }
 
     public void DuringTakingOff() throws Exception {
@@ -321,34 +326,36 @@ public class MainActivity extends FragmentActivity {
 
     //DisArming
     public void DisARM(View v) throws IOException {
-        byte[] buff = null;
-        msg_command_long msg = new msg_command_long(1, 1);
-        msg.param1 = 0;
-        msg.param2 = 0;
-        msg.param3 = 0;
-        msg.param4 = 0;
-        msg.param5 = 0;
-        msg.param6 = 0;
-        msg.param7 = 0;
-        msg.sequence = StateBuffer.increaseSequence();
+        if (StateBuffer.CREATEDCONNECTION) {
+            byte[] buff = null;
+            msg_command_long msg = new msg_command_long(1, 1);
+            msg.param1 = 0;
+            msg.param2 = 0;
+            msg.param3 = 0;
+            msg.param4 = 0;
+            msg.param5 = 0;
+            msg.param6 = 0;
+            msg.param7 = 0;
+            msg.sequence = StateBuffer.increaseSequence();
 
-        msg.target_system = 1;
-        msg.target_component = 1;
-        msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
-        msg.confirmation = 0;
+            msg.target_system = 1;
+            msg.target_component = 1;
+            msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+            msg.confirmation = 0;
 
-        mWriteBuffer.put(msg.encode());
-        synchronized (mWriteBuffer) {
-            int len = mWriteBuffer.position();
-            if (len > 0) {
-                buff = new byte[41];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(buff, 0, len);
-                mWriteBuffer.clear();
+            mWriteBuffer.put(msg.encode());
+            synchronized (mWriteBuffer) {
+                int len = mWriteBuffer.position();
+                if (len > 0) {
+                    buff = new byte[41];
+                    mWriteBuffer.rewind();
+                    mWriteBuffer.get(buff, 0, len);
+                    mWriteBuffer.clear();
+                }
             }
-        }
-        if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 10000);
+            if (buff != null) {
+                StateBuffer.CONNECTION.write(buff, 10000);
+            }
         }
     }
 

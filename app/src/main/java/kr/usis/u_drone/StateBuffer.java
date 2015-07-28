@@ -25,6 +25,7 @@ public class StateBuffer {
     public static Queue <byte [] > BufferStorage = new LinkedList<>();
 
     public static int sequence = 0;
+
     public static boolean flagThread_ch_send_Run = false;
 
     public static synchronized int increaseSequence(){

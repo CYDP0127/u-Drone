@@ -42,13 +42,18 @@ import java.util.Arrays;
  *
  * @author mike wakerly (opensource@hoho.com)
  */
-public class SerialInputOutputManager implements Runnable {
+public class SerialInputManager implements Runnable {
 
-    private static final String TAG = SerialInputOutputManager.class.getSimpleName();
+    private static final String TAG = SerialInputManager.class.getSimpleName();
     private static final boolean DEBUG = true;
 
     private static final int READ_WAIT_MILLIS = 200;
     private static final int BUFSIZ = 4096;
+
+    private static final int HEARTBEAT = 0;
+    private static final int OTHERS = 1;
+
+
 
     private final UsbSerialPort mDriver;
 
@@ -77,7 +82,7 @@ public class SerialInputOutputManager implements Runnable {
         public void onNewData(String data);
         //public void onNewData(MAVLinkMessage data);
         /**
-         * Called when {@link SerialInputOutputManager#run()} aborts due to an
+         * Called when {@link SerialInputManager#run()} aborts due to an
          * error.
          */
         public void onRunError(Exception e);
@@ -86,14 +91,14 @@ public class SerialInputOutputManager implements Runnable {
     /**
      * Creates a new instance with no listener.
      */
-    public SerialInputOutputManager(UsbSerialPort driver) {
+    public SerialInputManager(UsbSerialPort driver) {
         this(driver, null);
     }
 
     /**
      * Creates a new instance with the provided listener.
      */
-    public SerialInputOutputManager(UsbSerialPort driver, Listener listener) {
+    public SerialInputManager(UsbSerialPort driver, Listener listener) {
         mDriver = driver;
         mListener = listener;
     }
@@ -136,7 +141,6 @@ public class SerialInputOutputManager implements Runnable {
     @Override
     public void run() {
 
-
         synchronized (this) {
             if (getState() != State.STOPPED) {
                 throw new IllegalStateException("Already running.");
@@ -166,8 +170,9 @@ public class SerialInputOutputManager implements Runnable {
             }
         }
     }
+
     // put separated packet into Mavlink
-    private void MavLinkFactory(byte[] data){
+    private void MavLinkFactory(byte[] data, int type){
         try {
             DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
             MAVLinkReader reader = new MAVLinkReader(e, (byte) -2);
@@ -178,8 +183,15 @@ public class SerialInputOutputManager implements Runnable {
                 e.close();
                 return;
             }
+
+            // push data to queue if its not empty - Daniel
             if (msg != null || !msg.equals(null)) {
-                StateBuffer.RECEIEVEDATAQUEUE.offer(msg); // push data to queue - Daniel
+                if(type == OTHERS) {
+                    StateBuffer.RECEIEVEDATAQUEUE.offer(msg);
+                }
+                else if(type == HEARTBEAT){
+                    StateBuffer.HEARTBEATQUEUE.offer(msg);
+                }
             }
             e.close();
         }
@@ -187,7 +199,7 @@ public class SerialInputOutputManager implements Runnable {
 
         }
     }
-
+/*
     private void MAVLinkHeartBeat(byte[] data){
         try {
             DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
@@ -200,14 +212,14 @@ public class SerialInputOutputManager implements Runnable {
                 return;
             }
             if (msg != null || !msg.equals(null)) {
-                StateBuffer.HEARTBEATQUEUE.offer(msg); // push data to queue - Daniel
+
             }
             e.close();
         }
         catch(Exception var6){
 
         }
-    }
+    }*/
 
 
     private void step() throws IOException {
@@ -221,8 +233,8 @@ public class SerialInputOutputManager implements Runnable {
             if (listener != null) {
                 final byte[] data = new byte[len];
                 mReadBuffer.get(data, 0, len);
-                try{
-                    Arrays.fill(tmp, (byte) 0); //reset array to zero
+                try{                                        //Daniel
+                    Arrays.fill(tmp, (byte) 0);             //reset array to zero
                     for(int i = 0;i < data.length; i++){   // Separate packets
                         if((data[i]&0xFF)!=254){
                             continue;
@@ -240,11 +252,11 @@ public class SerialInputOutputManager implements Runnable {
                                 case 33:                //GLOBAL_POSITION_INT
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
-                                case 166:
-                                    MavLinkFactory(tmp);
+                                case 166:               //msg_radio(rssi)
+                                    MavLinkFactory(tmp, OTHERS);
                                     break;
                                 case 0:               //heartbeat
-                                    MAVLinkHeartBeat(tmp);
+                                    MavLinkFactory(tmp, HEARTBEAT);
                                     break;
                             }
                         }
@@ -253,26 +265,6 @@ public class SerialInputOutputManager implements Runnable {
             }
             mReadBuffer.clear();
         }
-
-/*        // Handle outgoing data.
-        byte[] outBuff = null;
-        synchronized (mWriteBuffer) {
-            len = mWriteBuffer.position();
-            if (len > 0) {
-                outBuff = new byte[len];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(outBuff, 0, len);
-                mWriteBuffer.clear();
-            }
-        }
-        if (outBuff != null) {
-            if (DEBUG) {
-                Log.d(TAG, "Writing data len=" + len);
-            }
-            mDriver.write(outBuff, READ_WAIT_MILLIS);
-        }
-
- */
     }
 
 }

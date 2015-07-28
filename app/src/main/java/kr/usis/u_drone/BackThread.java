@@ -6,6 +6,7 @@ import android.os.Message;
 /**
  * Created by Daniel on 2015-07-23.
  */
+
 //Thread for checking connection. - Daniel
 class BackThread extends Thread {
     Handler mHandler;

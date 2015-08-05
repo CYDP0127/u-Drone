@@ -43,6 +43,7 @@ import java.util.List;
  * Shows a {@link ListView} of available USB devices.
  *
  * @author mike wakerly (opensource@hoho.com)
+ * @Edited by 최용득(daniel)
  */
 public class DeviceListActivity {
     String title = new String();
@@ -107,6 +108,7 @@ public class DeviceListActivity {
                     Toast toast = Toast.makeText(mContext, title, Toast.LENGTH_LONG);
                     toast.show();
 
+                    //스켄완료후 연결
                     toStartActivity();
                     this.cancel(true);
                 }

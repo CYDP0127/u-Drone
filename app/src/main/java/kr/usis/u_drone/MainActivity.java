@@ -1,5 +1,9 @@
 package kr.usis.u_drone;
 
+/**
+ * Created by 최용득(Daniel) on 2015-07-14.
+ */
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
@@ -13,6 +17,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.mavlink.IMAVLinkCRC;
+import org.mavlink.MAVLinkCRC;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.MAV_CMD;
 import org.mavlink.messages.MAV_FRAME;
@@ -20,6 +26,7 @@ import org.mavlink.messages.MAV_SET_MODE;
 import org.mavlink.messages.ardupilotmega.msg_attitude;
 import org.mavlink.messages.ardupilotmega.msg_command_long;
 import org.mavlink.messages.ardupilotmega.msg_gps_raw_int;
+import org.mavlink.messages.ardupilotmega.msg_hil_controls;
 import org.mavlink.messages.ardupilotmega.msg_mission_ack;
 import org.mavlink.messages.ardupilotmega.msg_mission_count;
 import org.mavlink.messages.ardupilotmega.msg_mission_item;
@@ -45,11 +52,12 @@ public class MainActivity extends FragmentActivity {
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     DeviceListActivity dla;
+
     BackThread mThread;
     HBReceive hbrThread;
     HBSend hbsThread;
     ThreadChSend chsendThread;
-
+    CntProcedure cntThread;
 
     long longitude;
     long latitude;
@@ -149,6 +157,9 @@ public class MainActivity extends FragmentActivity {
             //execute channel data sending thread
             chsendThread = new ThreadChSend();
             chsendThread.start();
+
+            cntThread = new CntProcedure();
+            cntThread.start();
         }
     }
 
@@ -197,7 +208,6 @@ public class MainActivity extends FragmentActivity {
 
 
     public void TakeOffInit() throws IOException {
-
             msg_rc_channels_override msg = getChannelOvr();
             msg.chan1_raw = 65535;
             msg.chan2_raw = 65535;
@@ -207,26 +217,92 @@ public class MainActivity extends FragmentActivity {
             msg.chan6_raw = 65535;
             msg.chan7_raw = 65535;
             msg.chan8_raw = 65535;
+            msg.target_component = 1;
+            msg.target_system = 1;
             StateBuffer.flagThread_ch_send_Run = false;
             StateBuffer.BufferStorage.offer(msg.encode());
             StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    public void Arming() throws IOException {
-        byte[] buff = null;
+    public void Arming() throws  IOException{
+        byte[] buff = new byte[41];
+
+        buff[0] = (byte)254;
+        buff[1] = 33;
+        buff[2] = 0;
+        buff[3] = (byte)255;
+        buff[4] = (byte)190;
+        buff[5] = 76;
+        buff[6] = 0x00; //target system
+        buff[7] = 0x00; //target component
+
+
+        buff[8] = (byte)0x80; //command
+        buff[9] = 0x3F;
+
+        buff[10] = 0x00; //confirmation
+
+        //param1
+        buff[11] = 0x00;
+        buff[12] = 0x00;
+        buff[13] = 0x00;
+        buff[14] = 0x00;
+
+        //2
+        buff[15] = 0x00;
+        buff[16] = 0x00;
+        buff[17] = 0x00;
+        buff[18] = 0x00;
+
+        //3
+        buff[19] = 0x00;
+        buff[20] = 0x00;
+        buff[21] = 0x00;
+        buff[22] = 0x00;
+
+        //4
+        buff[23] = 0x00;
+        buff[24] = 0x00;
+        buff[25] = 0x00;
+        buff[26] = 0x00;
+
+        //5
+        buff[27] = 0x00;
+        buff[28] = 0x00;
+        buff[29] = 0x00;
+        buff[30] = 0x00;
+
+        //6
+        buff[31] = 0x00;
+        buff[32] = 0x00;
+        buff[33] = 0x00;
+        buff[34] = (byte)0x90;
+
+        //7
+        buff[35] = 0x01;
+        buff[36] = 0x01;
+        buff[37] = (byte)0xFA;
+        buff[38] = 0x00;
+        buff[39] = (byte)171;
+        buff[40] = (byte)175;
+        StateBuffer.CONNECTION.write(buff, 10000);
+    }
+
+
+
+ /*   public void Arming() throws IOException {
+        byte[] buffer = null;
         msg_command_long msg = new msg_command_long(1, 1);
-        msg.param1 = 1;
+        msg.param1 = 0;
         msg.param2 = 0;
         msg.param3 = 0;
         msg.param4 = 0;
         msg.param5 = 0;
         msg.param6 = 0;
         msg.param7 = 0;
-
         msg.sequence = StateBuffer.increaseSequence();
-
-        msg.target_system = 1;
-        msg.target_component = 1;
+        msg.target_system = 0;
+        msg.target_component = 0;
         msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
         //MAV_CMD_COMPONENT_CONTROL = 250;
         msg.confirmation = 0;
@@ -235,33 +311,80 @@ public class MainActivity extends FragmentActivity {
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
             if (len > 0) {
-                buff = new byte[41];
+                buffer = new byte[41];
                 mWriteBuffer.rewind();
-                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.get(buffer, 0, len);
                 mWriteBuffer.clear();
             }
         }
 
-        if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 10000);
+        if (buffer != null) {
+            StateBuffer.CONNECTION.write(buffer, 10000);
         }
 
-    }
+    }*/
 
     //ARM Button event
+    //ARM 버튼 이벤트
     public void ARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             SetMode(MAV_SET_MODE.STABILIZE);
-            Arming();
+            try {
+                Thread.sleep(100);
+                // publishProgress("sleep");
+            } catch (InterruptedException e) {
+                ;
+            }
+            SetMode(MAV_SET_MODE.STABILIZE);
+            try {
+                Thread.sleep(100);
+                // publishProgress("sleep");
+            } catch (InterruptedException e) {
+                ;
+            }
+            SetMode(MAV_SET_MODE.STABILIZE);
+            try {
+                Thread.sleep(100);
+                // publishProgress("sleep");
+            } catch (InterruptedException e) {
+                ;
+            }
+            try {
+                Thread.sleep(1000);
+                // publishProgress("sleep");
+            } catch (InterruptedException e) {
+                ;
+            }
+
+            Arming(); try {
+            Thread.sleep(100);
+            // publishProgress("sleep");
+        } catch (InterruptedException e) {
+            ;
+        }
             _Get_MissionReq();
-            TakeOffInit();
+        try {
+            Thread.sleep(100);
+            // publishProgress("sleep");
+        } catch (InterruptedException e) {
+            ;
+        }
+          /* TakeOffInit();
+        try {
+            Thread.sleep(100);
+            // publishProgress("sleep");
+        } catch (InterruptedException e) {
+            ;
+        }*/
         }
     }
 
     // TAKEOFF Button event
     // Probably have to put sleep between functions.
+    // TAKEOFF 버튼 이벤트.
     public void TakeOff(View v) throws Exception {
-        if (StateBuffer.CREATEDCONNECTION) {
+        //Arming();
+       /* if (StateBuffer.CREATEDCONNECTION) {
             call_mission_count();
             GetMsg_Waypoint();
             takeoff_();
@@ -269,9 +392,10 @@ public class MainActivity extends FragmentActivity {
             call_mission_accepted();
             SetMode(MAV_SET_MODE.AUTO);
             DuringTakingOff();
-        }
+        }*/
     }
 
+    //TAKEOFF시 Throttle, pitch, roll 값을 중립으로 둔다.
     public void DuringTakingOff() throws Exception {
         msg_rc_channels_override msg = getChannelOvr();
         msg.chan1_raw = 1505;
@@ -289,10 +413,13 @@ public class MainActivity extends FragmentActivity {
 
 
     // Setting mode
+    //드론에 모드 설정 명령 전송
     public void SetMode(int mode) throws IOException {
         byte[] buff = null;
         msg_set_mode message = new msg_set_mode(1, 1);
-        message.target_system = mode;
+        message.target_system = (byte)mode;
+        message.base_mode = 0;
+        message.custom_mode=0x101;
         message.sequence = StateBuffer.increaseSequence();
 
         mWriteBuffer.put(message.encode());
@@ -313,7 +440,7 @@ public class MainActivity extends FragmentActivity {
 
     //Mission Request
     public void _Get_MissionReq() throws IOException {
-        msg_mission_request message = new msg_mission_request(1, 1);
+        msg_mission_request message = new msg_mission_request(255, 190);
         message.target_system = 1;
         message.target_component = 1;
         message.seq = 0;
@@ -325,6 +452,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     //DisArming
+    //시동끄기
     public void DisARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             byte[] buff = null;
@@ -378,7 +506,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-
+    //에러 메시지박스 출력
     //to show up error message box
     public void showErrorMsg(String str) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -416,6 +544,7 @@ public class MainActivity extends FragmentActivity {
         textView[6] = (TextView) findViewById(R.id.textView24);     //Altitude
         textView[7] = (TextView) findViewById(R.id.textView13);     //HDOP
         textView[8] = (TextView) findViewById(R.id.textView14);     //Number of satellites visible
+        textView[9] = (TextView) findViewById(R.id.textView25);     //mode
 
 
 
@@ -438,15 +567,18 @@ public class MainActivity extends FragmentActivity {
 
     }
 
-
+    //연결
     public void connect() {
         if (!DisconnectedFlag) {
             Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
             dla = new DeviceListActivity(this);
-            dla.getUSBService(); //Get Telemetry device's Information
-            dla.refreshDeviceList(); //Scan device and connect
+
+            dla.getUSBService(); //Get Telemetry device's Information 디바이스 정보 갖고오기
+
+            dla.refreshDeviceList(); //Scan device and connect //스켄하고 장치 발견시 연결
 
             //call connection checking thread
+            //연결 확인 쓰레드
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
@@ -466,12 +598,13 @@ public class MainActivity extends FragmentActivity {
         mThread = null;
     }
 
+    //수신된 데이터 출력 쓰레드
     //Thread for checking received data and display
     public class Dequeue extends AsyncTask<Void, String, Void> {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < 10; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -520,6 +653,11 @@ public class MainActivity extends FragmentActivity {
                                 latitude = ((msg_gps_raw_int) msg).lat;
                                 altitude = ((msg_gps_raw_int) msg).alt;
                                 break;
+                            case 91:
+                               // valuse[9] = Integer.toString(((msg_hil_controls)msg).mode);
+                                valuse[9] = "test";
+                                break;
+
                         }
                         publishProgress(valuse);
 

@@ -1,23 +1,7 @@
-/* Copyright 2011-2013 Google Inc.
- * Copyright 2013 mike wakerly <opensource@hoho.com>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA.
- *
- * Project home page: https://github.com/mik3y/usb-serial-for-android
+/**
+ * Created by 최용득(Daniel) on 2015-07-15.
  */
+
 
 package kr.usis.serial.util;
 
@@ -36,12 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
- * Utility class which services a {@link UsbSerialPort} in its {@link #run()}
- * method.
- *
- * @author mike wakerly (opensource@hoho.com)
- */
+
 public class SerialInputManager implements Runnable {
 
     private static final String TAG = SerialInputManager.class.getSimpleName();
@@ -172,6 +151,7 @@ public class SerialInputManager implements Runnable {
     }
 
     // put separated packet into Mavlink
+    // 수신된 패킷의 종류에 맞게 Queue에 집어넣음
     private void MavLinkFactory(byte[] data, int type){
         try {
             DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
@@ -199,7 +179,8 @@ public class SerialInputManager implements Runnable {
 
         }
     }
-/*
+
+    /*
     private void MAVLinkHeartBeat(byte[] data){
         try {
             DataInputStream e = new DataInputStream(new ByteArrayInputStream(data));
@@ -212,7 +193,7 @@ public class SerialInputManager implements Runnable {
                 return;
             }
             if (msg != null || !msg.equals(null)) {
-
+                StateBuffer.HEARTBEATQUEUE.offer(msg);
             }
             e.close();
         }
@@ -221,7 +202,10 @@ public class SerialInputManager implements Runnable {
         }
     }*/
 
-
+//Daniel
+//데이터 수신 부분.
+//여러개의 패킷이 연달아서 한번에 수신됨
+//따라서 패킷의 처음과 끝을 확인하여 나눠주는 작업을 먼저 함
     private void step() throws IOException {
         byte [] tmp = new byte[64];
         int j = 0;
@@ -236,7 +220,7 @@ public class SerialInputManager implements Runnable {
                 try{                                        //Daniel
                     Arrays.fill(tmp, (byte) 0);             //reset array to zero
                     for(int i = 0;i < data.length; i++){   // Separate packets
-                        if((data[i]&0xFF)!=254){
+                        if((data[i]&0xFF)!=254){            //패킷 나눠주기
                             continue;
                         } else {
                             while((i < data.length - 1 && (data[i+1]&0xFF)!=254)){
@@ -245,7 +229,6 @@ public class SerialInputManager implements Runnable {
                             tmp[j] = data[i]; j = 0;
 
                             switch((tmp[5]&0xff)){
-
                                 case 1:                 //SYS_STATUS
                                 case 24:                //GPS_RAW
                                 case 30:                //ATTITUDE
@@ -253,10 +236,11 @@ public class SerialInputManager implements Runnable {
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
                                 case 166:               //msg_radio(rssi)
-                                    MavLinkFactory(tmp, OTHERS);
+                                case 91:
+                                    MavLinkFactory(tmp,OTHERS); //나눠진 패킷 여기다가 넣음
                                     break;
                                 case 0:               //heartbeat
-                                    MavLinkFactory(tmp, HEARTBEAT);
+                                    MavLinkFactory(tmp,HEARTBEAT); //여기도
                                     break;
                             }
                         }

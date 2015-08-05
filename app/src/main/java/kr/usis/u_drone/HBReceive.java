@@ -4,8 +4,10 @@ import android.os.Handler;
 import android.os.Message;
 
 /**
- * Created by Daniel on 2015-07-23.
+ * Created by 최용득(Daniel) on 2015-07-23.
  */
+
+//Heartbeat 수신 쓰레드 30초간 수신이 없다면 애러메시지 출력
 public class HBReceive extends Thread{
     Handler mHandler;
     int count = 0;

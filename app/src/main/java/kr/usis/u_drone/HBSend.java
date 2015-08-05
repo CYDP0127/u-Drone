@@ -12,8 +12,10 @@ import org.mavlink.messages.ardupilotmega.msg_heartbeat;
 import java.nio.ByteBuffer;
 
 /**
- * Created by Daniel on 2015-07-23.
+ * Created by 최용득(Daniel) on 2015-07-23.
  */
+
+//Heartbeat 송신 쓰레드 1Hz (1초에 1번)
 public class HBSend extends Thread {
 
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
@@ -22,7 +24,7 @@ public class HBSend extends Thread {
 
         byte[] buff = null;
         msg_heartbeat hb = new msg_heartbeat(1, 1);
-        hb.mavlink_version = 3;
+//        hb.mavlink_version = 3;
 
         while (true) {
             //for checking heartbeat at every second.

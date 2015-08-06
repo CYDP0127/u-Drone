@@ -66,7 +66,7 @@ class CntProcedure extends Thread {
 
 
     public void run() {
-        //Send HeartBeat 9 times
+        //Send HeartBeat 8 times
         msg_heartbeat hb = new msg_heartbeat(1, 1);
         for (int i = 0; i <= 7; i++) {
             //for checking heartbeat at every second.

@@ -21,7 +21,7 @@ public class ThreadChSend extends Thread {
                         synchronized (mWriteBuffer) {
                             int len = mWriteBuffer.position();
                             if (len > 0) {
-                                buff = new byte[50];
+                                buff = new byte[26];
                                 mWriteBuffer.rewind();
                                 mWriteBuffer.get(buff, 0, len);
                                 mWriteBuffer.clear();

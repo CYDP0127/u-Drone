@@ -236,12 +236,12 @@ public class SerialInputManager implements Runnable {
                                 case 35:                //RC_CHANNELS_RAW
                                 case 74:                //VFR_HUD
                                 case 166:               //msg_radio(rssi)
-                                case 91:
+                                case 0:
                                     MavLinkFactory(tmp,OTHERS); //나눠진 패킷 여기다가 넣음
                                     break;
-                                case 0:               //heartbeat
-                                    MavLinkFactory(tmp,HEARTBEAT); //여기도
-                                    break;
+                                //case 0:               //heartbeat
+                                //    MavLinkFactory(tmp,HEARTBEAT); //여기도
+                                //    break;
                             }
                         }
                     }

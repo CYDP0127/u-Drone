@@ -21,11 +21,13 @@ import org.mavlink.IMAVLinkCRC;
 import org.mavlink.MAVLinkCRC;
 import org.mavlink.messages.MAVLinkMessage;
 import org.mavlink.messages.MAV_CMD;
+import org.mavlink.messages.MAV_COMPONENT;
 import org.mavlink.messages.MAV_FRAME;
 import org.mavlink.messages.MAV_SET_MODE;
 import org.mavlink.messages.ardupilotmega.msg_attitude;
 import org.mavlink.messages.ardupilotmega.msg_command_long;
 import org.mavlink.messages.ardupilotmega.msg_gps_raw_int;
+import org.mavlink.messages.ardupilotmega.msg_heartbeat;
 import org.mavlink.messages.ardupilotmega.msg_hil_controls;
 import org.mavlink.messages.ardupilotmega.msg_mission_ack;
 import org.mavlink.messages.ardupilotmega.msg_mission_count;
@@ -51,6 +53,7 @@ public class MainActivity extends FragmentActivity {
 
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
+    boolean home_Coordinate = true;
     DeviceListActivity dla;
 
     BackThread mThread;
@@ -62,6 +65,10 @@ public class MainActivity extends FragmentActivity {
     long longitude;
     long latitude;
     long altitude;
+    long home_logitude = 0;
+    long home_latitude = 0;
+    long home_altitude = 0;
+
 
 
     private SerialInputManager mSerialIoManager;
@@ -112,10 +119,45 @@ public class MainActivity extends FragmentActivity {
         textview.invalidate();*/
     }
 
+    public void sleep(int ms){
+        try {
+            Thread.sleep(ms);
+            // publishProgress("sleep");
+        } catch (InterruptedException e) {
+            ;
+        }
+    }
+
+    // Setting mode
+    //드론에 모드 설정 명령 전송
+    public void SetMode(int mode) throws IOException {
+        byte[] buff = null;
+        msg_set_mode message = new msg_set_mode(1, 1);
+        message.target_system = (byte)mode;
+        message.base_mode = 0;
+        message.custom_mode=0x101;
+        message.sequence = StateBuffer.increaseSequence();
+
+        mWriteBuffer.put(message.encode());
+
+        synchronized (mWriteBuffer) {
+            int len = mWriteBuffer.position();
+            if (len > 0) {
+                buff = new byte[14];
+                mWriteBuffer.rewind();
+                mWriteBuffer.get(buff, 0, len);
+                mWriteBuffer.clear();
+            }
+        }
+        if (buff != null) {
+            StateBuffer.CONNECTION.write(buff, 1000);
+        }
+    }
+
     public msg_rc_channels_override getChannelOvr() {
-        msg_rc_channels_override msgovr = new msg_rc_channels_override(1, 1);
+        msg_rc_channels_override msgovr = new msg_rc_channels_override(255, 190);
         msgovr.sequence = StateBuffer.increaseSequence();
-        msgovr.target_component = 1;
+        msgovr.target_component = MAV_COMPONENT.MAV_COMP_ID_MISSIONPLANNER;
         msgovr.target_system = 1;
         return msgovr;
     }
@@ -146,9 +188,9 @@ public class MainActivity extends FragmentActivity {
             mExecutor.submit(mSerialIoManager);
 
             //execute heartbeat receiving thread
-            hbrThread = new HBReceive(mHandler);
-            hbrThread.setDaemon(true);
-            hbrThread.start();
+           // hbrThread = new HBReceive(mHandler);
+            //hbrThread.setDaemon(true);
+            //hbrThread.start();
 
             //execute heartbeat sending thread
             hbsThread = new HBSend();
@@ -163,137 +205,33 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    public void call_mission_accepted() throws Exception {
-        msg_mission_ack message = new msg_mission_ack(1, 1);
-        message.sequence = StateBuffer.increaseSequence();
-        message.target_component = 1;
-        message.target_system = 1;
-        message.type = 0;
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-    }
 
-    public void call_mission_count() throws Exception {
-        msg_mission_count message = new msg_mission_count(1, 1);
-        message.sequence = StateBuffer.increaseSequence();
-        message.target_component = 1;
-        message.target_system = 1;
-        message.count = 0;
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-    }
 
-    public void GetMsg_Waypoint() throws IOException {
-        msg_mission_item message = getMissionItem(latitude, longitude, altitude, MAV_CMD.MAV_CMD_NAV_WAYPOINT);
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-    }
-
-    public void GetMissionItem_LoiterUnli() throws Exception {
-        msg_mission_item message = getMissionItem(latitude, longitude, altitude, MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM);
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-    }
-
-    public void takeoff_() throws Exception {
-        msg_mission_item message = getMissionItem(0, 0, altitude, MAV_CMD.MAV_CMD_NAV_TAKEOFF);
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
+    //ARM Button event
+    //ARM 버튼 이벤트
+    public void ARM(View v) throws IOException {
+        if (StateBuffer.CREATEDCONNECTION) {
+            SetMode(MAV_SET_MODE.STABILIZE);
+            sleep(100);
+            SetMode(MAV_SET_MODE.STABILIZE);
+            sleep(100);
+            SetMode(MAV_SET_MODE.STABILIZE);
+            sleep(1000);
+            Arming();
+            sleep(100);
+            _Get_MissionReq();
+            sleep(100);
+            TakeOffInit();
+        }
     }
 
 
-    public void TakeOffInit() throws IOException {
-            msg_rc_channels_override msg = getChannelOvr();
-            msg.chan1_raw = 65535;
-            msg.chan2_raw = 65535;
-            msg.chan3_raw = 1105;
-            msg.chan4_raw = 65535;
-            msg.chan5_raw = 65535;
-            msg.chan6_raw = 65535;
-            msg.chan7_raw = 65535;
-            msg.chan8_raw = 65535;
-            msg.target_component = 1;
-            msg.target_system = 1;
-            StateBuffer.flagThread_ch_send_Run = false;
-            StateBuffer.BufferStorage.offer(msg.encode());
-            StateBuffer.flagThread_ch_send_Run = true;
-    }
-
-    public void Arming() throws  IOException{
-        byte[] buff = new byte[41];
-
-        buff[0] = (byte)254;
-        buff[1] = 33;
-        buff[2] = 0;
-        buff[3] = (byte)255;
-        buff[4] = (byte)190;
-        buff[5] = 76;
-        buff[6] = 0x00; //target system
-        buff[7] = 0x00; //target component
-
-
-        buff[8] = (byte)0x80; //command
-        buff[9] = 0x3F;
-
-        buff[10] = 0x00; //confirmation
-
-        //param1
-        buff[11] = 0x00;
-        buff[12] = 0x00;
-        buff[13] = 0x00;
-        buff[14] = 0x00;
-
-        //2
-        buff[15] = 0x00;
-        buff[16] = 0x00;
-        buff[17] = 0x00;
-        buff[18] = 0x00;
-
-        //3
-        buff[19] = 0x00;
-        buff[20] = 0x00;
-        buff[21] = 0x00;
-        buff[22] = 0x00;
-
-        //4
-        buff[23] = 0x00;
-        buff[24] = 0x00;
-        buff[25] = 0x00;
-        buff[26] = 0x00;
-
-        //5
-        buff[27] = 0x00;
-        buff[28] = 0x00;
-        buff[29] = 0x00;
-        buff[30] = 0x00;
-
-        //6
-        buff[31] = 0x00;
-        buff[32] = 0x00;
-        buff[33] = 0x00;
-        buff[34] = (byte)0x90;
-
-        //7
-        buff[35] = 0x01;
-        buff[36] = 0x01;
-        buff[37] = (byte)0xFA;
-        buff[38] = 0x00;
-        buff[39] = (byte)171;
-        buff[40] = (byte)175;
-        StateBuffer.CONNECTION.write(buff, 10000);
-    }
-
-
-
- /*   public void Arming() throws IOException {
+    //시동걸기
+    //최용득
+    public void Arming() throws IOException {
         byte[] buffer = null;
         msg_command_long msg = new msg_command_long(1, 1);
-        msg.param1 = 0;
+        msg.param1 = 1;
         msg.param2 = 0;
         msg.param3 = 0;
         msg.param4 = 0;
@@ -301,8 +239,8 @@ public class MainActivity extends FragmentActivity {
         msg.param6 = 0;
         msg.param7 = 0;
         msg.sequence = StateBuffer.increaseSequence();
-        msg.target_system = 0;
-        msg.target_component = 0;
+        msg.target_system = 1;
+        msg.target_component = 1;
         msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
         //MAV_CMD_COMPONENT_CONTROL = 250;
         msg.confirmation = 0;
@@ -322,69 +260,49 @@ public class MainActivity extends FragmentActivity {
             StateBuffer.CONNECTION.write(buffer, 10000);
         }
 
-    }*/
-
-    //ARM Button event
-    //ARM 버튼 이벤트
-    public void ARM(View v) throws IOException {
-        if (StateBuffer.CREATEDCONNECTION) {
-            SetMode(MAV_SET_MODE.STABILIZE);
-            try {
-                Thread.sleep(100);
-                // publishProgress("sleep");
-            } catch (InterruptedException e) {
-                ;
-            }
-            SetMode(MAV_SET_MODE.STABILIZE);
-            try {
-                Thread.sleep(100);
-                // publishProgress("sleep");
-            } catch (InterruptedException e) {
-                ;
-            }
-            SetMode(MAV_SET_MODE.STABILIZE);
-            try {
-                Thread.sleep(100);
-                // publishProgress("sleep");
-            } catch (InterruptedException e) {
-                ;
-            }
-            try {
-                Thread.sleep(1000);
-                // publishProgress("sleep");
-            } catch (InterruptedException e) {
-                ;
-            }
-
-            Arming(); try {
-            Thread.sleep(100);
-            // publishProgress("sleep");
-        } catch (InterruptedException e) {
-            ;
-        }
-            _Get_MissionReq();
-        try {
-            Thread.sleep(100);
-            // publishProgress("sleep");
-        } catch (InterruptedException e) {
-            ;
-        }
-          /* TakeOffInit();
-        try {
-            Thread.sleep(100);
-            // publishProgress("sleep");
-        } catch (InterruptedException e) {
-            ;
-        }*/
-        }
     }
+
+
+    //Mission Request
+    //최용득
+    public void _Get_MissionReq() throws IOException {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_request message = new msg_mission_request(1, 1);
+        message.target_system = 1;
+        message.target_component = 1;
+        message.seq = 0;
+        message.sequence = StateBuffer.increaseSequence();
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+
+    //Arming하면서 Throttle 을 조금 올려주어야 모터가 돌아가고 Arming상태가 유지됨
+    //최용득
+    public void TakeOffInit() throws IOException {
+        msg_rc_channels_override msg = getChannelOvr();
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg.chan1_raw = 65535;
+        msg.chan2_raw = 65535;
+        msg.chan3_raw = 1105;
+        msg.chan4_raw = 65535;
+        msg.chan5_raw = 65535;
+        msg.chan6_raw = 65535;
+        msg.chan7_raw = 65535;
+        msg.chan8_raw = 65535;
+        StateBuffer.BufferStorage.offer(msg.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
 
     // TAKEOFF Button event
     // Probably have to put sleep between functions.
     // TAKEOFF 버튼 이벤트.
     public void TakeOff(View v) throws Exception {
         //Arming();
-       /* if (StateBuffer.CREATEDCONNECTION) {
+        if (StateBuffer.CREATEDCONNECTION) {
             call_mission_count();
             GetMsg_Waypoint();
             takeoff_();
@@ -392,11 +310,66 @@ public class MainActivity extends FragmentActivity {
             call_mission_accepted();
             SetMode(MAV_SET_MODE.AUTO);
             DuringTakingOff();
-        }*/
+        }
+    }
+
+    //미션 카운트
+    //최용득
+    public void call_mission_count() throws Exception {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_count message = new msg_mission_count(1, 1);
+        message.sequence = StateBuffer.increaseSequence();
+        message.target_component = 1;
+        message.target_system = 1;
+        message.count = 0;
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+    //Home위치 지정하기
+    //최용득
+    public void GetMsg_Waypoint() throws IOException {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_item message = getMissionItem(latitude, longitude, altitude, MAV_CMD.MAV_CMD_NAV_WAYPOINT);
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+    //테이크오프 명령
+    public void takeoff_() throws Exception {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_item message = getMissionItem(0, 0, altitude, MAV_CMD.MAV_CMD_NAV_TAKEOFF);
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+    public void GetMissionItem_LoiterUnli() throws Exception {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_item message = getMissionItem(home_latitude, home_logitude, home_altitude, MAV_CMD.MAV_CMD_NAV_LOITER_UNLIM);
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+    public void call_mission_accepted() throws Exception {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_mission_ack message = new msg_mission_ack(1, 1);
+        message.sequence = StateBuffer.increaseSequence();
+        message.target_component = 1;
+        message.target_system = 1;
+        message.type = 0;
+        StateBuffer.BufferStorage.offer(message.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
     }
 
     //TAKEOFF시 Throttle, pitch, roll 값을 중립으로 둔다.
     public void DuringTakingOff() throws Exception {
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
         msg_rc_channels_override msg = getChannelOvr();
         msg.chan1_raw = 1505;
         msg.chan2_raw = 1505;
@@ -406,86 +379,11 @@ public class MainActivity extends FragmentActivity {
         msg.chan6_raw = 65535;
         msg.chan7_raw = 65535;
         msg.chan8_raw = 65535;
-        StateBuffer.flagThread_ch_send_Run = false;
         StateBuffer.BufferStorage.offer(msg.encode());
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
 
-    // Setting mode
-    //드론에 모드 설정 명령 전송
-    public void SetMode(int mode) throws IOException {
-        byte[] buff = null;
-        msg_set_mode message = new msg_set_mode(1, 1);
-        message.target_system = (byte)mode;
-        message.base_mode = 0;
-        message.custom_mode=0x101;
-        message.sequence = StateBuffer.increaseSequence();
-
-        mWriteBuffer.put(message.encode());
-
-        synchronized (mWriteBuffer) {
-            int len = mWriteBuffer.position();
-            if (len > 0) {
-                buff = new byte[14];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(buff, 0, len);
-                mWriteBuffer.clear();
-            }
-        }
-        if (buff != null) {
-            StateBuffer.CONNECTION.write(buff, 1000);
-        }
-    }
-
-    //Mission Request
-    public void _Get_MissionReq() throws IOException {
-        msg_mission_request message = new msg_mission_request(255, 190);
-        message.target_system = 1;
-        message.target_component = 1;
-        message.seq = 0;
-        message.sequence = StateBuffer.increaseSequence();
-
-        StateBuffer.flagThread_ch_send_Run = false;
-        StateBuffer.BufferStorage.offer(message.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-    }
-
-    //DisArming
-    //시동끄기
-    public void DisARM(View v) throws IOException {
-        if (StateBuffer.CREATEDCONNECTION) {
-            byte[] buff = null;
-            msg_command_long msg = new msg_command_long(1, 1);
-            msg.param1 = 0;
-            msg.param2 = 0;
-            msg.param3 = 0;
-            msg.param4 = 0;
-            msg.param5 = 0;
-            msg.param6 = 0;
-            msg.param7 = 0;
-            msg.sequence = StateBuffer.increaseSequence();
-
-            msg.target_system = 1;
-            msg.target_component = 1;
-            msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
-            msg.confirmation = 0;
-
-            mWriteBuffer.put(msg.encode());
-            synchronized (mWriteBuffer) {
-                int len = mWriteBuffer.position();
-                if (len > 0) {
-                    buff = new byte[41];
-                    mWriteBuffer.rewind();
-                    mWriteBuffer.get(buff, 0, len);
-                    mWriteBuffer.clear();
-                }
-            }
-            if (buff != null) {
-                StateBuffer.CONNECTION.write(buff, 10000);
-            }
-        }
-    }
 
 
     public void YawToLeft(View v) throws IOException {
@@ -528,6 +426,45 @@ public class MainActivity extends FragmentActivity {
         AlertDialog alert = builder.create();
         alert.show();
     }
+
+
+
+    //DisArming
+    //시동끄기
+    public void DisARM(View v) throws IOException {
+        if (StateBuffer.CREATEDCONNECTION) {
+            byte[] buff = null;
+            msg_command_long msg = new msg_command_long(1, 1);
+            msg.param1 = 0;
+            msg.param2 = 0;
+            msg.param3 = 0;
+            msg.param4 = 0;
+            msg.param5 = 0;
+            msg.param6 = 0;
+            msg.param7 = 0;
+            msg.sequence = StateBuffer.increaseSequence();
+
+            msg.target_system = 1;
+            msg.target_component = 1;
+            msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
+            msg.confirmation = 0;
+
+            mWriteBuffer.put(msg.encode());
+            synchronized (mWriteBuffer) {
+                int len = mWriteBuffer.position();
+                if (len > 0) {
+                    buff = new byte[41];
+                    mWriteBuffer.rewind();
+                    mWriteBuffer.get(buff, 0, len);
+                    mWriteBuffer.clear();
+                }
+            }
+            if (buff != null) {
+                StateBuffer.CONNECTION.write(buff, 10000);
+            }
+        }
+    }
+
 
 
     @Override
@@ -598,7 +535,7 @@ public class MainActivity extends FragmentActivity {
         mThread = null;
     }
 
-    //수신된 데이터 출력 쓰레드
+    //수신된 데이터 출력 쓰레드 - 최용득
     //Thread for checking received data and display
     public class Dequeue extends AsyncTask<Void, String, Void> {
 
@@ -629,6 +566,9 @@ public class MainActivity extends FragmentActivity {
                     //publishProgress("poll");
                     if (msg != null || !msg.equals(null)) {
                         switch (msg.messageType) {
+                            case 0:
+                                valuse[9] = Long.toString(((msg_heartbeat) msg).custom_mode);
+                                break;
                             case 30:
                                 valuse[0] = Float.toString(((msg_attitude) msg).pitch);
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
@@ -649,13 +589,17 @@ public class MainActivity extends FragmentActivity {
                             case 24:
                                 valuse[7] = Integer.toString(((msg_gps_raw_int) msg).eph);
                                 valuse[8] = Integer.toString(((msg_gps_raw_int) msg).satellites_visible);
+
+                                //홈 좌표 설정
+                                if (home_Coordinate){
+                                    home_logitude = ((msg_gps_raw_int) msg).lon;
+                                    home_latitude = ((msg_gps_raw_int) msg).lat;
+                                    home_altitude = ((msg_gps_raw_int) msg).alt;
+                                    home_Coordinate = false;
+                                }
                                 longitude = ((msg_gps_raw_int) msg).lon;
                                 latitude = ((msg_gps_raw_int) msg).lat;
                                 altitude = ((msg_gps_raw_int) msg).alt;
-                                break;
-                            case 91:
-                               // valuse[9] = Integer.toString(((msg_hil_controls)msg).mode);
-                                valuse[9] = "test";
                                 break;
 
                         }

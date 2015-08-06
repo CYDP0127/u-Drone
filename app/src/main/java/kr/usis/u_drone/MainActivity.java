@@ -465,6 +465,12 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    //Google Map location button event
+    public void getLocation(View v) throws IOException {
+        System.out.print("Print our your location");
+
+    }
+
 
 
     @Override
@@ -614,3 +620,5 @@ public class MainActivity extends FragmentActivity {
         }
     }
 }
+
+

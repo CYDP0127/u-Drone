@@ -9,5 +9,6 @@
     <string name="ConnectButton">Cnt</string>
     <string name="DisconnectButton">DisCnt</string>
     <string name="TakeOFF">Take off</string>
+    <string name="LocationButton">My location</string>
 
 </resources>

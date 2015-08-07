@@ -1,11 +1,12 @@
 package kr.usis.u_drone;
 
 /**
- * Created by ÃÖ¿ëµæ(Daniel) on 2015-07-14.
+ * Created by ï¿½Ö¿ï¿½ï¿½(Daniel) on 2015-07-14.
  */
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -129,7 +130,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     // Setting mode
-    //µå·Ð¿¡ ¸ðµå ¼³Á¤ ¸í·É Àü¼Û
+    //ï¿½ï¿½Ð¿ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     public void SetMode(int mode) throws IOException {
         byte[] buff = null;
         msg_set_mode message = new msg_set_mode(1, 1);
@@ -208,7 +209,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //ARM Button event
-    //ARM ¹öÆ° ÀÌº¥Æ®
+    //ARM ï¿½ï¿½Æ° ï¿½Ìºï¿½Æ®
     public void ARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             SetMode(MAV_SET_MODE.STABILIZE);
@@ -226,8 +227,8 @@ public class MainActivity extends FragmentActivity {
     }
 
 
-    //½Ãµ¿°É±â
-    //ÃÖ¿ëµæ
+    //ï¿½Ãµï¿½ï¿½É±ï¿½
+    //ï¿½Ö¿ï¿½ï¿½
     public void Arming() throws IOException {
         byte[] buffer = null;
         msg_command_long msg = new msg_command_long(1, 1);
@@ -264,7 +265,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //Mission Request
-    //ÃÖ¿ëµæ
+    //ï¿½Ö¿ï¿½ï¿½
     public void _Get_MissionReq() throws IOException {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -278,8 +279,8 @@ public class MainActivity extends FragmentActivity {
     }
 
 
-    //ArmingÇÏ¸é¼­ Throttle À» Á¶±Ý ¿Ã·ÁÁÖ¾î¾ß ¸ðÅÍ°¡ µ¹¾Æ°¡°í Arming»óÅÂ°¡ À¯ÁöµÊ
-    //ÃÖ¿ëµæ
+    //Armingï¿½Ï¸é¼­ Throttle ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ö¾ï¿½ï¿½ ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½Æ°ï¿½ï¿½ï¿½ Armingï¿½ï¿½ï¿½Â°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //ï¿½Ö¿ï¿½ï¿½
     public void TakeOffInit() throws IOException {
         msg_rc_channels_override msg = getChannelOvr();
         StateBuffer.flagThread_ch_send_Run = false;
@@ -299,7 +300,7 @@ public class MainActivity extends FragmentActivity {
 
     // TAKEOFF Button event
     // Probably have to put sleep between functions.
-    // TAKEOFF ¹öÆ° ÀÌº¥Æ®.
+    // TAKEOFF ï¿½ï¿½Æ° ï¿½Ìºï¿½Æ®.
     public void TakeOff(View v) throws Exception {
         //Arming();
         if (StateBuffer.CREATEDCONNECTION) {
@@ -313,8 +314,8 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    //¹Ì¼Ç Ä«¿îÆ®
-    //ÃÖ¿ëµæ
+    //ï¿½Ì¼ï¿½ Ä«ï¿½ï¿½Æ®
+    //ï¿½Ö¿ï¿½ï¿½
     public void call_mission_count() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -327,8 +328,8 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //HomeÀ§Ä¡ ÁöÁ¤ÇÏ±â
-    //ÃÖ¿ëµæ
+    //Homeï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+    //ï¿½Ö¿ï¿½ï¿½
     public void GetMsg_Waypoint() throws IOException {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -337,7 +338,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //Å×ÀÌÅ©¿ÀÇÁ ¸í·É
+    //ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     public void takeoff_() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -366,7 +367,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //TAKEOFF½Ã Throttle, pitch, roll °ªÀ» Áß¸³À¸·Î µÐ´Ù.
+    //TAKEOFFï¿½ï¿½ Throttle, pitch, roll ï¿½ï¿½ï¿½ï¿½ ï¿½ß¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð´ï¿½.
     public void DuringTakingOff() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -404,7 +405,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //¿¡·¯ ¸Þ½ÃÁö¹Ú½º Ãâ·Â
+    //ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½
     //to show up error message box
     public void showErrorMsg(String str) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -430,7 +431,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //DisArming
-    //½Ãµ¿²ô±â
+    //ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½
     public void DisARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             byte[] buff = null;
@@ -467,8 +468,11 @@ public class MainActivity extends FragmentActivity {
 
     //Google Map location button event
     public void getLocation(View v) throws IOException {
-        System.out.print("Print our your location");
-
+        Intent myIntent = new Intent(MainActivity.this, mylocation.class);
+        //myIntent.putExtra("keyX", "33.867"); //Optional parameters - x
+        //myIntent.putExtra("keyY", "151.206"); // y
+        //Toast.makeText(this, "Location button pressed", Toast.LENGTH_SHORT).show();
+        startActivity(myIntent);
     }
 
 
@@ -489,8 +493,6 @@ public class MainActivity extends FragmentActivity {
         textView[8] = (TextView) findViewById(R.id.textView14);     //Number of satellites visible
         textView[9] = (TextView) findViewById(R.id.textView25);     //mode
 
-
-
         // Button listeners below
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
 
@@ -510,18 +512,18 @@ public class MainActivity extends FragmentActivity {
 
     }
 
-    //¿¬°á
+    //ï¿½ï¿½ï¿½ï¿½
     public void connect() {
         if (!DisconnectedFlag) {
             Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
             dla = new DeviceListActivity(this);
 
-            dla.getUSBService(); //Get Telemetry device's Information µð¹ÙÀÌ½º Á¤º¸ °®°í¿À±â
+            dla.getUSBService(); //Get Telemetry device's Information ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-            dla.refreshDeviceList(); //Scan device and connect //½ºÄËÇÏ°í ÀåÄ¡ ¹ß°ß½Ã ¿¬°á
+            dla.refreshDeviceList(); //Scan device and connect //ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½Ä¡ ï¿½ß°ß½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             //call connection checking thread
-            //¿¬°á È®ÀÎ ¾²·¹µå
+            //ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
@@ -541,7 +543,7 @@ public class MainActivity extends FragmentActivity {
         mThread = null;
     }
 
-    //¼ö½ÅµÈ µ¥ÀÌÅÍ Ãâ·Â ¾²·¹µå - ÃÖ¿ëµæ
+    //ï¿½ï¿½ï¿½Åµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½Ö¿ï¿½ï¿½
     //Thread for checking received data and display
     public class Dequeue extends AsyncTask<Void, String, Void> {
 
@@ -596,7 +598,7 @@ public class MainActivity extends FragmentActivity {
                                 valuse[7] = Integer.toString(((msg_gps_raw_int) msg).eph);
                                 valuse[8] = Integer.toString(((msg_gps_raw_int) msg).satellites_visible);
 
-                                //È¨ ÁÂÇ¥ ¼³Á¤
+                                //È¨ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½
                                 if (home_Coordinate){
                                     home_logitude = ((msg_gps_raw_int) msg).lon;
                                     home_latitude = ((msg_gps_raw_int) msg).lat;

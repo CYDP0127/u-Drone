@@ -1,78 +1,68 @@
 package kr.usis.u_drone;
 
-
-import android.content.Intent;
+import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
-import com.google.android.gms.maps.OnMapReadyCallback;
-import android.support.v4.app.FragmentActivity;
+import com.google.android.gms.maps.*;
 
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+public class mylocation extends Activity{
 
-public class mylocation extends FragmentActivity implements OnMapReadyCallback {
+    /**
+     * Local variables *
+     */
+    GoogleMap googleMap;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mylocation);
-        /*
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        */
+        createMapView();
+        addMarker();
     }
 
-    @Override
-    public void onMapReady(GoogleMap map) {
-        // Add a marker in Sydney, Australia, and move the camera.
-        //LatLng sydney = new LatLng(-34, 151);
-        //map.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //map.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-    }
+    /**
+     * Initialises the mapview
+     */
+    private void createMapView() {
+        /**
+         * Catch the null pointer exception that
+         * may be thrown when initialising the map
+         */
+        try {
+            if (null == googleMap) {
+                googleMap = ((MapFragment) getFragmentManager().findFragmentById(
+                        R.id.mapView)).getMap();
 
-}
-
-
-/*
-public class mylocation extends FragmentActivity implements OnMapReadyCallback {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.mylocation);
-        /*
-        Bundle extras = getIntent().getExtras();
-        if(extras !=null)
-        {
-            String  = extras.getString("PersonID");
+                /**
+                 * If the map is still null after attempted initialisation,
+                 * show an error to the user
+                 */
+                if (null == googleMap) {
+                    Toast.makeText(getApplicationContext(),
+                            "Error creating map", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } catch (NullPointerException exception) {
+            Log.e("mapApp", exception.toString());
         }
-        Intent intent = getIntent();
-        String X = intent.getStringExtra("keyX");
-        String Y = intent.getStringExtra("keyY");
 
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
     }
+    /**
+     * Adds a marker to the map
+     */
+    private void addMarker(){
 
-    @Override
-    public void onMapReady(GoogleMap map) {
-        LatLng sydney = new LatLng(-33.867, 151.206);
-
-        map.setMyLocationEnabled(true);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 13));
-
-        map.addMarker(new MarkerOptions()
-                .title("Sydney")
-                .snippet("The most populous city in Australia.")
-                .position(sydney));
+        /** Make sure that the map has been initialised **/
+        if(null != googleMap){
+            googleMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(35.53, 129.31))
+                            .title("Marker")
+                            .draggable(true)
+            );
+        }
     }
 }
-
-*/

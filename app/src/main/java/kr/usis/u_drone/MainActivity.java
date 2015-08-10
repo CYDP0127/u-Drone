@@ -1,7 +1,7 @@
 package kr.usis.u_drone;
 
 /**
- * Created by �ֿ��(Daniel) on 2015-07-14.
+ * Created by ????(Daniel) on 2015-07-14.
  */
 
 import android.app.AlertDialog;
@@ -55,6 +55,9 @@ public class MainActivity extends FragmentActivity {
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     boolean home_Coordinate = true;
+    boolean init_voltage = true;
+    boolean state_takeoff = false;
+
     DeviceListActivity dla;
 
     BackThread mThread;
@@ -62,6 +65,8 @@ public class MainActivity extends FragmentActivity {
     HBSend hbsThread;
     ThreadChSend chsendThread;
     CntProcedure cntThread;
+    EnRThread enrThread;
+
 
     long longitude;
     long latitude;
@@ -69,8 +74,9 @@ public class MainActivity extends FragmentActivity {
     long home_logitude = 0;
     long home_latitude = 0;
     long home_altitude = 0;
-
-
+    float elasped_time;
+    float remain_time;
+    float voltage = 1;
 
     private SerialInputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
@@ -86,12 +92,24 @@ public class MainActivity extends FragmentActivity {
                 //heartbeat receiving error
                 showErrorMsg("HEARTBEAT RECEIVING ERROR");
             }
+            if(msg.what == 2){
+                elasped_time = msg.arg1;
+                remain_time = msg.arg2;
+                DisplayEnRTime((elasped_time / 100) % 60, remain_time / 100);
+            }
+
             if (msg.what == 255 || msg.what == 200) {
                 showErrorMsg("HEARTBEAT RECEIVING ERROR !!!!");
             }
         }
 
     };
+
+    //to display elasped time, remain time
+    public void DisplayEnRTime(float elasped_time, float remain_time){
+        textView[9].setText(String.format("%.2f",elasped_time));
+        textView[10].setText(String.format("%.2f",remain_time));
+    }
 
     //handler for displaying recieved data. - Daniel (test module)
     private final SerialInputManager.Listener mListener =
@@ -129,8 +147,38 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    private void startIoManager() {
+        //Daniel
+        if (StateBuffer.CONNECTION != null) {
+
+            //execute data receiving thread
+            mSerialIoManager = new SerialInputManager(StateBuffer.CONNECTION, mListener);
+            mExecutor.submit(mSerialIoManager);
+
+            //execute heartbeat receiving thread
+            hbrThread = new HBReceive(mHandler);
+            hbrThread.setDaemon(true);
+            hbrThread.start();
+
+            //execute heartbeat sending thread
+            hbsThread = new HBSend();
+            hbsThread.start();
+
+            //execute channel data sending thread
+            chsendThread = new ThreadChSend();
+            chsendThread.start();
+
+            //execute connecetion Thread.
+            //when it's connected this Thread send some packets for requesting data which we need
+            cntThread = new CntProcedure();
+            cntThread.start();
+
+        }
+    }
+
+
     // Setting mode
-    //��п� ��� ���� ��� ���
+    //??�?? ??? ???? ??? ???
     public void SetMode(int mode) throws IOException {
         byte[] buff = null;
         msg_set_mode message = new msg_set_mode(1, 1);
@@ -180,36 +228,9 @@ public class MainActivity extends FragmentActivity {
         return msg;
     }
 
-    private void startIoManager() {
-
-        if (StateBuffer.CONNECTION != null) {
-
-            //execute data receiving thread
-            mSerialIoManager = new SerialInputManager(StateBuffer.CONNECTION, mListener);
-            mExecutor.submit(mSerialIoManager);
-
-            //execute heartbeat receiving thread
-           // hbrThread = new HBReceive(mHandler);
-            //hbrThread.setDaemon(true);
-            //hbrThread.start();
-
-            //execute heartbeat sending thread
-            hbsThread = new HBSend();
-            hbsThread.start();
-
-            //execute channel data sending thread
-            chsendThread = new ThreadChSend();
-            chsendThread.start();
-
-            cntThread = new CntProcedure();
-            cntThread.start();
-        }
-    }
-
-
 
     //ARM Button event
-    //ARM ��ư �̺�Ʈ
+    //ARM ??? ????
     public void ARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             SetMode(MAV_SET_MODE.STABILIZE);
@@ -227,8 +248,8 @@ public class MainActivity extends FragmentActivity {
     }
 
 
-    //�õ��ɱ�
-    //�ֿ��
+    //??????
+    //????
     public void Arming() throws IOException {
         byte[] buffer = null;
         msg_command_long msg = new msg_command_long(1, 1);
@@ -265,7 +286,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //Mission Request
-    //�ֿ��
+    //????
     public void _Get_MissionReq() throws IOException {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -279,8 +300,8 @@ public class MainActivity extends FragmentActivity {
     }
 
 
-    //Arming�ϸ鼭 Throttle �� ���� �÷��־�� ���Ͱ� ���ư��� Arming���°� ������
-    //�ֿ��
+    //Arming??? Throttle ?? ???? ?�?????? ????? ??????? Arming???�?? ??????
+    //????
     public void TakeOffInit() throws IOException {
         msg_rc_channels_override msg = getChannelOvr();
         StateBuffer.flagThread_ch_send_Run = false;
@@ -300,7 +321,7 @@ public class MainActivity extends FragmentActivity {
 
     // TAKEOFF Button event
     // Probably have to put sleep between functions.
-    // TAKEOFF ��ư �̺�Ʈ.
+    // TAKEOFF ??? ????.
     public void TakeOff(View v) throws Exception {
         //Arming();
         if (StateBuffer.CREATEDCONNECTION) {
@@ -311,11 +332,21 @@ public class MainActivity extends FragmentActivity {
             call_mission_accepted();
             SetMode(MAV_SET_MODE.AUTO);
             DuringTakingOff();
+            state_takeoff = true;
         }
     }
 
-    //�̼� ī��Ʈ
-    //�ֿ��
+    //Land Event
+    public void Landing(View v) throws IOException{
+        if(state_takeoff){
+            SetMode(MAV_SET_MODE.LAND);
+            sleep(100);
+            state_takeoff = false;
+        }
+    }
+
+    //??? ????
+    //????
     public void call_mission_count() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -328,8 +359,8 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //Home��ġ �����ϱ�
-    //�ֿ��
+    //Home??? ???????
+    //????
     public void GetMsg_Waypoint() throws IOException {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -338,7 +369,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //����ũ���� ���
+    //????????? ???
     public void takeoff_() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -367,7 +398,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //TAKEOFF�� Throttle, pitch, roll ���� �߸����� �д�.
+    //TAKEOFF?? Throttle, pitch, roll ???? ??????? ??��?.
     public void DuringTakingOff() throws Exception {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
@@ -375,6 +406,29 @@ public class MainActivity extends FragmentActivity {
         msg.chan1_raw = 1505;
         msg.chan2_raw = 1505;
         msg.chan3_raw = 1505;
+        msg.chan4_raw = 65535;
+        msg.chan5_raw = 65535;
+        msg.chan6_raw = 65535;
+        msg.chan7_raw = 65535;
+        msg.chan8_raw = 65535;
+        StateBuffer.BufferStorage.offer(msg.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+    }
+
+    //Send Throttle event;
+    public void Throttle_send(View v) throws IOException{
+        int id = v.getId();
+        int throttle = 1105;
+
+        if(id == R.id.throttle_up)
+            throttle = 1160;
+
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_rc_channels_override msg = getChannelOvr();
+        msg.chan1_raw = 65535;
+        msg.chan2_raw = 65535;
+        msg.chan3_raw = throttle;
         msg.chan4_raw = 65535;
         msg.chan5_raw = 65535;
         msg.chan6_raw = 65535;
@@ -405,7 +459,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
-    //���� �޽����ڽ� ���
+    //???? ???????? ???
     //to show up error message box
     public void showErrorMsg(String str) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -431,7 +485,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //DisArming
-    //�õ�����
+    //???????
     public void DisARM(View v) throws IOException {
         if (StateBuffer.CREATEDCONNECTION) {
             byte[] buff = null;
@@ -491,7 +545,9 @@ public class MainActivity extends FragmentActivity {
         textView[6] = (TextView) findViewById(R.id.textView24);     //Altitude
         textView[7] = (TextView) findViewById(R.id.textView13);     //HDOP
         textView[8] = (TextView) findViewById(R.id.textView14);     //Number of satellites visible
-        textView[9] = (TextView) findViewById(R.id.textView25);     //mode
+        textView[9] = (TextView) findViewById(R.id.textView21);     //Elasped Time
+        textView[10] = (TextView) findViewById(R.id.textView22);     //Remain Time
+
 
         // Button listeners below
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
@@ -512,18 +568,18 @@ public class MainActivity extends FragmentActivity {
 
     }
 
-    //����
+    //????
     public void connect() {
         if (!DisconnectedFlag) {
             Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
             dla = new DeviceListActivity(this);
 
-            dla.getUSBService(); //Get Telemetry device's Information ����̽� ���� �������
+            dla.getUSBService(); //Get Telemetry device's Information ?????? ???? ???????
 
-            dla.refreshDeviceList(); //Scan device and connect //�����ϰ� ��ġ �߽߰� ����
+            dla.refreshDeviceList(); //Scan device and connect //??????? ??? ???? ????
 
             //call connection checking thread
-            //���� Ȯ�� ������
+            //???? ??? ??????
             mThread = new BackThread(mHandler);
             mThread.setDaemon(true);
             mThread.start();
@@ -543,13 +599,13 @@ public class MainActivity extends FragmentActivity {
         mThread = null;
     }
 
-    //���ŵ� ������ ��� ������ - �ֿ��
+    //????? ?????? ??? ?????? - ????
     //Thread for checking received data and display
     public class Dequeue extends AsyncTask<Void, String, Void> {
 
         @Override
         protected void onProgressUpdate(String... strings) {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 9; i++) {
                 textView[i].setText(strings[i]);
             }
         }
@@ -574,9 +630,6 @@ public class MainActivity extends FragmentActivity {
                     //publishProgress("poll");
                     if (msg != null || !msg.equals(null)) {
                         switch (msg.messageType) {
-                            case 0:
-                                valuse[9] = Long.toString(((msg_heartbeat) msg).custom_mode);
-                                break;
                             case 30:
                                 valuse[0] = Float.toString(((msg_attitude) msg).pitch);
                                 valuse[1] = Float.toString(((msg_attitude) msg).roll);
@@ -587,8 +640,15 @@ public class MainActivity extends FragmentActivity {
                                 valuse[4] = Integer.toString(((msg_radio) msg).remrssi);
                                 break;
                             case 1:
+                                //set current volage and execute displaying Elasped time, Remain Time thread
                                 float tmp1 = (((msg_sys_status) msg).voltage_battery) / 1000f;
                                 String tmp2 = Float.toString(Math.round(tmp1 * 100f) / 100f);
+                                if(init_voltage){
+                                    enrThread = new EnRThread(mHandler,Double.parseDouble(tmp2));
+                                    enrThread.setDaemon(true);
+                                    enrThread.start();
+                                    init_voltage = false;
+                                }
                                 valuse[5] = tmp2 + "V";
                                 break;
                             case 74:
@@ -598,7 +658,7 @@ public class MainActivity extends FragmentActivity {
                                 valuse[7] = Integer.toString(((msg_gps_raw_int) msg).eph);
                                 valuse[8] = Integer.toString(((msg_gps_raw_int) msg).satellites_visible);
 
-                                //Ȩ ��ǥ ����
+                                //? ??? ????
                                 if (home_Coordinate){
                                     home_logitude = ((msg_gps_raw_int) msg).lon;
                                     home_latitude = ((msg_gps_raw_int) msg).lat;

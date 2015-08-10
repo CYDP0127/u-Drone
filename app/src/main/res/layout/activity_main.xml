@@ -125,8 +125,8 @@
                 android:onClick="ARM"
                 android:id="@+id/button"
                 android:layout_alignParentTop="true"
-                android:layout_toLeftOf="@+id/button2"
-                android:layout_toStartOf="@+id/button2" />
+                android:layout_toRightOf="@+id/button7"
+                android:layout_toEndOf="@+id/button7" />
 
             <Button
                 android:layout_width="wrap_content"
@@ -134,8 +134,9 @@
                 android:text="Disarm"
                 android:onClick="DisARM"
                 android:id="@+id/button2"
-                android:layout_toLeftOf="@+id/button3"
-                android:layout_toStartOf="@+id/button3" />
+                android:layout_alignParentTop="true"
+                android:layout_alignRight="@+id/button9"
+                android:layout_alignEnd="@+id/button9" />
 
             <Button
                 android:layout_width="wrap_content"
@@ -143,16 +144,19 @@
                 android:text="takeoff"
                 android:onClick="TakeOff"
                 android:id="@+id/button3"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true" />
+                android:layout_alignParentTop="true"
+                android:layout_alignRight="@+id/button10"
+                android:layout_alignEnd="@+id/button10"
+                android:layout_marginRight="27dp"
+                android:layout_marginEnd="27dp" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="throttle up"
-                android:onClick="YawToLeft"
-                android:id="@+id/button4"
+                android:onClick="Throttle_send"
+                android:id="@+id/throttle_up"
                 android:layout_centerVertical="true"
                 android:layout_toRightOf="@+id/button6"
                 android:layout_toLeftOf="@+id/button7"
@@ -163,7 +167,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="throttle down"
-                android:id="@+id/button5"
+                android:onClick="Throttle_send"
+                android:id="@+id/throttle_down"
                 android:layout_below="@+id/button6"
                 android:layout_toRightOf="@+id/button6"
                 android:layout_toEndOf="@+id/button6" />
@@ -175,10 +180,8 @@
                 android:text="yaw left"
                 android:id="@+id/button6"
                 android:layout_below="@+id/button4"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_marginLeft="49dp"
-                android:layout_marginStart="49dp" />
+                android:layout_toRightOf="@+id/textView20"
+                android:layout_toEndOf="@+id/textView20" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -196,10 +199,10 @@
                 android:layout_height="wrap_content"
                 android:text="pitch up"
                 android:id="@+id/button8"
-                android:layout_above="@+id/button7"
-                android:layout_toLeftOf="@+id/button2"
-                android:layout_alignLeft="@+id/button11"
-                android:layout_alignStart="@+id/button11" />
+                android:layout_alignTop="@+id/button4"
+                android:layout_toRightOf="@+id/button10"
+                android:layout_toLeftOf="@+id/button9"
+                android:layout_toStartOf="@+id/button9" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -208,8 +211,8 @@
                 android:text="roll right"
                 android:id="@+id/button9"
                 android:layout_below="@+id/button8"
-                android:layout_alignLeft="@+id/button2"
-                android:layout_alignStart="@+id/button2" />
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true" />
 
             <Button
                 style="?android:attr/buttonStyleSmall"
@@ -235,11 +238,12 @@
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="MANUAL"
+                android:text="LAND"
+                android:onClick="Landing"
                 android:id="@+id/button12"
                 android:layout_alignParentTop="true"
-                android:layout_toLeftOf="@+id/button"
-                android:layout_toStartOf="@+id/button" />
+                android:layout_toRightOf="@+id/button3"
+                android:layout_alignBottom="@+id/button2" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -248,7 +252,7 @@
                 android:text="Altitude"
                 android:id="@+id/textView20"
                 android:textSize="17dp"
-                android:layout_below="@+id/button12"
+                android:layout_alignParentTop="true"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true" />
 

@@ -438,6 +438,26 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
+    public void Manuel(View v) throws IOException{
+        StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_rc_channels_override msg = getChannelOvr();
+        msg.chan1_raw = 0;
+        msg.chan2_raw = 0;
+        msg.chan3_raw = 0;
+        msg.chan4_raw = 0;
+        msg.chan5_raw = 0;
+        msg.chan6_raw = 0;
+        msg.chan7_raw = 0;
+        msg.chan8_raw = 0;
+        StateBuffer.BufferStorage.offer(msg.encode());
+        StateBuffer.flagThread_ch_send_Run = true;
+        sleep(3000);
+        StateBuffer.flagThread_ch_send_Run = false;
+        chsendThread.stop();
+        SetMode(MAV_SET_MODE.ALTHOLD);
+    }
+
 
 
 

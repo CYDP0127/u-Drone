@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -48,15 +49,14 @@ import kr.usis.serial.util.SerialInputManager;
 public class MainActivity extends FragmentActivity {
 
     TextView[] textView = new TextView[30];
+    Button b_throttle_up;
 
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(4096);
     boolean DisconnectedFlag = false;
     boolean home_Coordinate = true;
     boolean init_voltage = true;
     boolean state_takeoff = false;
-
     DeviceListActivity dla;
-
     BackThread mThread;
     HBReceive hbrThread;
     HBSend hbsThread;
@@ -74,6 +74,9 @@ public class MainActivity extends FragmentActivity {
     float elasped_time;
     float remain_time;
     float voltage = 1;
+
+    final static int NEUTRAL = 1505;
+    final static int MAINTAIN = 65535;
 
     private SerialInputManager mSerialIoManager;
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
@@ -183,9 +186,7 @@ public class MainActivity extends FragmentActivity {
         message.base_mode = 0;
         message.custom_mode=0x101;
         message.sequence = StateBuffer.increaseSequence();
-
         mWriteBuffer.put(message.encode());
-
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
             if (len > 0) {
@@ -263,7 +264,6 @@ public class MainActivity extends FragmentActivity {
         msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
         //MAV_CMD_COMPONENT_CONTROL = 250;
         msg.confirmation = 0;
-
         mWriteBuffer.put(msg.encode());
         synchronized (mWriteBuffer) {
             int len = mWriteBuffer.position();
@@ -303,14 +303,14 @@ public class MainActivity extends FragmentActivity {
         msg_rc_channels_override msg = getChannelOvr();
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
-        msg.chan1_raw = 65535;
-        msg.chan2_raw = 65535;
+        msg.chan1_raw = MAINTAIN;
+        msg.chan2_raw = MAINTAIN;
         msg.chan3_raw = 1105;
-        msg.chan4_raw = 65535;
-        msg.chan5_raw = 65535;
-        msg.chan6_raw = 65535;
-        msg.chan7_raw = 65535;
-        msg.chan8_raw = 65535;
+        msg.chan4_raw = MAINTAIN;
+        msg.chan5_raw = MAINTAIN;
+        msg.chan6_raw = MAINTAIN;
+        msg.chan7_raw = MAINTAIN;
+        msg.chan8_raw = MAINTAIN;
         StateBuffer.BufferStorage.offer(msg.encode());
         StateBuffer.flagThread_ch_send_Run = true;
     }
@@ -400,6 +400,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = false;
         sleep(100);
         msg_rc_channels_override msg = getChannelOvr();
+<<<<<<< Updated upstream
         msg.chan1_raw = 1505;
         msg.chan2_raw = 1505;
         msg.chan3_raw = 1505;
@@ -432,6 +433,16 @@ public class MainActivity extends FragmentActivity {
         msg.chan6_raw = 65535;
         msg.chan7_raw = 65535;
         msg.chan8_raw = 65535;
+=======
+        msg.chan1_raw = NEUTRAL;
+        msg.chan2_raw = NEUTRAL;
+        msg.chan3_raw = NEUTRAL;
+        msg.chan4_raw = MAINTAIN;
+        msg.chan5_raw = MAINTAIN;
+        msg.chan6_raw = MAINTAIN;
+        msg.chan7_raw = MAINTAIN;
+        msg.chan8_raw = MAINTAIN;
+>>>>>>> Stashed changes
         StateBuffer.BufferStorage.offer(msg.encode());
         StateBuffer.flagThread_ch_send_Run = true;
     }
@@ -457,26 +468,26 @@ public class MainActivity extends FragmentActivity {
         SetMode(MAV_SET_MODE.ALTHOLD);
     }
 
-
-
-
-    public void YawToLeft(View v) throws IOException {
-        // sending yaw
-        byte[] buff = null;
-        msg_rc_channels_override msg = getChannelOvr();
-        msg.chan1_raw = 65535;  //roll
-        msg.chan2_raw = 65535;  //pitch
-        msg.chan3_raw = 65535;  //throttle
-        msg.chan4_raw = 1400;   //yaw
-        msg.chan5_raw = 65535;
-        msg.chan6_raw = 65535;
-        msg.chan7_raw = 65535;
-        msg.chan8_raw = 65535;
-        Toast.makeText(this, "Yaw button is pressed", Toast.LENGTH_SHORT).show();
+    //Send pitch,yaw,roll,throttle ..
+    public void Send_Control_Command(int roll, int pitch, int throttle, int yaw) throws IOException{
+        SetMode(MAV_SET_MODE.LOITER);
+        SetMode(MAV_SET_MODE.LOITER);
+        SetMode(MAV_SET_MODE.LOITER);
         StateBuffer.flagThread_ch_send_Run = false;
+        sleep(100);
+        msg_rc_channels_override msg = getChannelOvr();
+        msg.chan1_raw = roll;
+        msg.chan2_raw = pitch;
+        msg.chan3_raw = throttle;
+        msg.chan4_raw = yaw;
+        msg.chan5_raw = MAINTAIN;
+        msg.chan6_raw = MAINTAIN;
+        msg.chan7_raw = MAINTAIN;
+        msg.chan8_raw = MAINTAIN;
         StateBuffer.BufferStorage.offer(msg.encode());
         StateBuffer.flagThread_ch_send_Run = true;
     }
+
 
     //???? ???????? ???
     //to show up error message box
@@ -486,7 +497,7 @@ public class MainActivity extends FragmentActivity {
                 .setTitle("Error Message Box")
                 .setMessage(str)
                 .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setPositiveButton("OK..", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         //do some thing here which you need
                     }
@@ -517,12 +528,10 @@ public class MainActivity extends FragmentActivity {
             msg.param6 = 0;
             msg.param7 = 0;
             msg.sequence = StateBuffer.increaseSequence();
-
             msg.target_system = 1;
             msg.target_component = 1;
             msg.command = MAV_CMD.MAV_CMD_COMPONENT_ARM_DISARM;
             msg.confirmation = 0;
-
             mWriteBuffer.put(msg.encode());
             synchronized (mWriteBuffer) {
                 int len = mWriteBuffer.position();
@@ -555,6 +564,9 @@ public class MainActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+
+        b_throttle_up = (Button)findViewById(R.id.throttle_up);
+
         textView[0] = (TextView) findViewById(R.id.textView15);     //PITCH
         textView[1] = (TextView) findViewById(R.id.textView17);     //ROLL
         textView[2] = (TextView) findViewById(R.id.textView18);     //YAW
@@ -567,25 +579,74 @@ public class MainActivity extends FragmentActivity {
         textView[9] = (TextView) findViewById(R.id.textView21);     //Elasped Time
         textView[10] = (TextView) findViewById(R.id.textView22);     //Remain Time
 
+        findViewById(R.id.yaw_up).setOnTouchListener(mTouchListener);    //ch1
+        findViewById(R.id.yaw_down).setOnTouchListener(mTouchListener);
+        findViewById(R.id.pitch_up).setOnTouchListener(mTouchListener);     //ch2
+        findViewById(R.id.pitch_down).setOnTouchListener(mTouchListener);
+        findViewById(R.id.throttle_up).setOnTouchListener(mTouchListener);    //ch3
+        findViewById(R.id.throttle_down).setOnTouchListener(mTouchListener);
+        findViewById(R.id.roll_up).setOnTouchListener(mTouchListener);       //ch4
+        findViewById(R.id.roll_down).setOnTouchListener(mTouchListener);
+
+/*
 
         // Button listeners below
+        //Connection Button listener
         final Button ConnectButton = (Button) findViewById(R.id.ConnectButton);
-
         ConnectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                connect();
+
             }
         });
 
+        //Disconnection Button listener
         final Button DisconnectButton = (Button) findViewById(R.id.DisconnectButton);
-
         DisconnectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 disconnect();
             }
         });
 
+*/
+
     }
+
+    //Button event roll, pitch, throttle, yaw
+    Button.OnTouchListener mTouchListener = new View.OnTouchListener() {
+        public boolean onTouch(View v, MotionEvent event) {
+            int action = event.getAction();
+            int id = v.getId();
+            int roll = NEUTRAL;
+            int pitch = NEUTRAL;
+            int throttle = NEUTRAL;
+            int yaw = NEUTRAL;
+
+            if (action == MotionEvent.ACTION_DOWN) {
+                switch(id){
+                    case R.id.roll_up : roll = 1600; break; //right
+                    case R.id.roll_down : roll = 1400; break; //left
+                    case R.id.pitch_up : pitch = 1600; break; //front
+                    case R.id.pitch_down : pitch = 1400; break; //back
+                    case R.id.throttle_up : throttle = 1760; break; //up
+                    case R.id.throttle_down : throttle = 1240; break; //down
+                    case R.id.yaw_up : yaw = 1580; break; //right
+                    case R.id.yaw_down : yaw = 1420; break; //left
+                }
+                try{Send_Control_Command(roll,pitch,throttle,yaw);}catch(IOException e){}
+            }
+            if(action == MotionEvent.ACTION_UP){
+                switch (id){
+                    default:
+                        try{Send_Control_Command(NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL);}catch(IOException e){}
+                }
+            }
+            return false;
+        }
+    };
+
+
+
+
 
     //????
     public void connect() {

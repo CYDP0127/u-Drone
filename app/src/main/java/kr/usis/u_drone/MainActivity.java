@@ -412,6 +412,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.flagThread_ch_send_Run = true;
     }
 
+    /*
     //Send Throttle event;
     public void Throttle_send(View v) throws IOException{
         int id = v.getId();
@@ -434,6 +435,7 @@ public class MainActivity extends FragmentActivity {
         StateBuffer.BufferStorage.offer(msg.encode());
         StateBuffer.flagThread_ch_send_Run = true;
     }
+    */
 
     public void Manuel(View v) throws IOException{
         StateBuffer.flagThread_ch_send_Run = false;

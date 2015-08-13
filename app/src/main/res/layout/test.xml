@@ -72,6 +72,7 @@
             android:orientation="horizontal"
             >
             <Button
+                android:onClick="connect"
                 android:layout_marginLeft="20dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -79,6 +80,7 @@
                 android:id="@+id/ConnectButton"
                 />
             <Button
+                android:onClick="disconnect"
                 android:layout_marginLeft="20dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -109,6 +111,7 @@
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:background="@mipmap/compas_01_nor"
+                    android:id="@+id/pitch_up"
                     android:layout_marginLeft="115dp"
                     android:layout_marginTop="22.5dp"
 
@@ -121,11 +124,13 @@
                     <Button
                         android:layout_width="60dp"
                         android:layout_height="60dp"
+                        android:id="@+id/yaw_down"
                         android:background="@mipmap/compas_02_nor"
                         android:layout_marginLeft="20dp" />
                     <Button
                         android:layout_width="60dp"
                         android:layout_height="60dp"
+                        android:id="@+id/yaw_up"
                         android:background="@mipmap/compas_03_nor"
                         android:layout_marginLeft="129dp" />
                 </LinearLayout>
@@ -135,6 +140,7 @@
                     android:layout_height="60dp"
                     android:background="@mipmap/compas_04_nor"
                     android:layout_marginLeft="115dp"
+                    android:id="@+id/pitch_down"
                     android:layout_marginTop="181dp"/>
 
                 <LinearLayout
@@ -145,6 +151,7 @@
                     android:orientation="horizontal">
 
                     <Button
+                        android:onClick="ARM"
                         android:layout_width="110dp"
                         android:layout_height="wrap_content"
                         android:background="@mipmap/step4_btn_nor"
@@ -153,6 +160,7 @@
                         />
 
                     <Button
+                        android:onClick="TakeOff"
                         android:layout_width="110dp"
                         android:layout_height="wrap_content"
                         android:background="@mipmap/step4_btn_to"
@@ -201,6 +209,7 @@
                 android:background="@mipmap/step3_title_nor"
                 android:layout_marginLeft="15dp" />
             <Button
+                android:id="@+id/throttle_up"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="@mipmap/compas_01_nor"
@@ -213,11 +222,13 @@
                 android:layout_height="60dp"
                 android:orientation="horizontal">
                 <Button
+                    android:id="@+id/roll_down"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:background="@mipmap/step3_btn2_nor"
                     android:layout_marginLeft="17dp" />
                 <Button
+                    android:id="@+id/roll_up"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
                     android:background="@mipmap/step3_btn3_nor"
@@ -225,6 +236,7 @@
             </LinearLayout>
 
             <Button
+                android:id="@+id/throttle_down"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:background="@mipmap/compas_04_nor"
@@ -244,6 +256,7 @@
                 android:layout_height="90dp"
                 android:orientation="horizontal">
                 <Button
+                    android:onClick="DisARM"
                     android:layout_width="110dp"
                     android:layout_height="wrap_content"
                     android:background="@mipmap/step4_btn_da"
@@ -251,6 +264,7 @@
                     android:layout_marginTop="10dp"
                     />
                 <Button
+                    android:onClick="Landing"
                     android:layout_width="110dp"
                     android:layout_height="wrap_content"
                     android:background="@mipmap/step4_btn_land"
@@ -379,6 +393,7 @@
                 android:layout_marginLeft="0dp"
                 />
             <Button
+                android:onClick="Manual"
                 android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

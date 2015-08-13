@@ -448,23 +448,25 @@ public class MainActivity extends FragmentActivity {
     */
 
     public void Manual(View v) throws IOException{
-        StateBuffer.flagThread_ch_send_Run = false;
-        sleep(100);
-        msg_rc_channels_override msg = getChannelOvr();
-        msg.chan1_raw = 0;
-        msg.chan2_raw = 0;
-        msg.chan3_raw = 0;
-        msg.chan4_raw = 0;
-        msg.chan5_raw = 0;
-        msg.chan6_raw = 0;
-        msg.chan7_raw = 0;
-        msg.chan8_raw = 0;
-        StateBuffer.BufferStorage.offer(msg.encode());
-        StateBuffer.flagThread_ch_send_Run = true;
-        sleep(3000);
-        StateBuffer.flagThread_ch_send_Run = false;
-        chsendThread.stop();
-        SetMode(MAV_SET_MODE.ALTHOLD);
+        if(StateBuffer.CREATEDCONNECTION) {
+            StateBuffer.flagThread_ch_send_Run = false;
+            sleep(100);
+            msg_rc_channels_override msg = getChannelOvr();
+            msg.chan1_raw = 0;
+            msg.chan2_raw = 0;
+            msg.chan3_raw = 0;
+            msg.chan4_raw = 0;
+            msg.chan5_raw = 0;
+            msg.chan6_raw = 0;
+            msg.chan7_raw = 0;
+            msg.chan8_raw = 0;
+            StateBuffer.BufferStorage.offer(msg.encode());
+            StateBuffer.flagThread_ch_send_Run = true;
+            sleep(3000);
+            StateBuffer.flagThread_ch_send_Run = false;
+            chsendThread.stop();
+            SetMode(MAV_SET_MODE.ALTHOLD);
+        }
     }
 
     //Send pitch,yaw,roll,throttle ..
@@ -597,24 +599,47 @@ public class MainActivity extends FragmentActivity {
             int pitch = NEUTRAL;
             int throttle = NEUTRAL;
             int yaw = NEUTRAL;
-
-            if (action == MotionEvent.ACTION_DOWN) {
-                switch(id){
-                    case R.id.roll_up : roll = 1600; break; //right
-                    case R.id.roll_down : roll = 1400; break; //left
-                    case R.id.pitch_up : pitch = 1600; break; //front
-                    case R.id.pitch_down : pitch = 1400; break; //back
-                    case R.id.throttle_up : throttle = 1760; break; //up
-                    case R.id.throttle_down : throttle = 1240; break; //down
-                    case R.id.yaw_up : yaw = 1580; break; //right
-                    case R.id.yaw_down : yaw = 1420; break; //left
+            if(StateBuffer.CREATEDCONNECTION) {
+                if (action == MotionEvent.ACTION_DOWN) {
+                    switch (id) {
+                        case R.id.roll_up:
+                            roll = 1600;
+                            break; //right
+                        case R.id.roll_down:
+                            roll = 1400;
+                            break; //left
+                        case R.id.pitch_up:
+                            pitch = 1600;
+                            break; //front
+                        case R.id.pitch_down:
+                            pitch = 1400;
+                            break; //back
+                        case R.id.throttle_up:
+                            throttle = 1760;
+                            break; //up
+                        case R.id.throttle_down:
+                            throttle = 1240;
+                            break; //down
+                        case R.id.yaw_up:
+                            yaw = 1580;
+                            break; //right
+                        case R.id.yaw_down:
+                            yaw = 1420;
+                            break; //left
+                    }
+                    try {
+                        Send_Control_Command(roll, pitch, throttle, yaw);
+                    } catch (IOException e) {
+                    }
                 }
-                try{Send_Control_Command(roll,pitch,throttle,yaw);}catch(IOException e){}
-            }
-            if(action == MotionEvent.ACTION_UP){
-                switch (id){
-                    default:
-                        try{Send_Control_Command(NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL);}catch(IOException e){}
+                if (action == MotionEvent.ACTION_UP) {
+                    switch (id) {
+                        default:
+                            try {
+                                Send_Control_Command(NEUTRAL, NEUTRAL, NEUTRAL, NEUTRAL);
+                            } catch (IOException e) {
+                            }
+                    }
                 }
             }
             return false;
@@ -626,7 +651,7 @@ public class MainActivity extends FragmentActivity {
 
 
     //????
-    public void connect() {
+    public void connect(View v) {
         if (!DisconnectedFlag) {
             Toast.makeText(this, "Connection Established", Toast.LENGTH_SHORT).show();
             dla = new DeviceListActivity(this);
@@ -649,7 +674,7 @@ public class MainActivity extends FragmentActivity {
     }
 
     //disconnect button event
-    public void disconnect() {
+    public void disconnect(View v) {
         Toast.makeText(this, "Connection Destroyed", Toast.LENGTH_SHORT).show();
         dla = null;
         DisconnectedFlag = false;
